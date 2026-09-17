@@ -23,6 +23,7 @@ Obsidian에서 Markdown 또는 저자의 Word 원고를 저널 형태로 조판�
 
 그림과 표의 명시적 인접 캡션을 우선 사용하며, 그림의 alt는 대체 캡션입니다. 캡션을 새로 만들어 내지 않습니다. 이미지 안 글자·불명확한 연결은 기존 검토 기능으로 확인합니다.
 
+- [사용 순서와 예시](docs/quick-start.ko.md)
 - [전체 속성 매핑](docs/markdown-properties.md)
 - [전체 원고 템플릿](templates/journal-manuscript.md)
 - [개발 및 검증 기록](docs/research/R-041-independent-markdown-editor.md)

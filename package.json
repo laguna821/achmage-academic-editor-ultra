@@ -17,11 +17,13 @@
     "docs:yaml": "node --import tsx scripts/generate-yaml-docs.ts"
   },
   "keywords": [
-    "hwp",
-    "hwpx",
-    "docx",
+    "obsidian",
     "markdown",
-    "kordoc"
+    "journal",
+    "typst",
+    "apa",
+    "affinity",
+    "idml"
   ],
   "license": "MIT",
   "dependencies": {
