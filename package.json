@@ -1,0 +1,75 @@
+{
+  "name": "achmage-academic-editor-ultra",
+  "version": "0.1.0",
+  "description": "Deterministic journal composition from Markdown or author DOCX, with PDF, IDML and native Affinity export.",
+  "main": "main.js",
+  "scripts": {
+    "gen-assets": "node scripts/gen-journal-assets.mjs && node scripts/gen-journal-ocr.mjs",
+    "dev": "npm run gen-assets && node esbuild.config.mjs",
+    "build": "npm run gen-assets && tsc --noEmit --skipLibCheck && node esbuild.config.mjs production",
+    "test": "node scripts/run-tests.mjs",
+    "lint": "eslint src package.json manifest.json --max-warnings 0",
+    "check-bundle": "node scripts/check-aaeu-bundle.mjs",
+    "check-community": "node scripts/check-community.mjs",
+    "check-release": "node scripts/check-aaeu-release.mjs",
+    "check": "npm run lint && npm run test && npm run build && npm run check-bundle && npm run check-community && npm run check-release",
+    "test:journal-engine": "node scripts/test-journal-engine.mjs",
+    "docs:yaml": "node --import tsx scripts/generate-yaml-docs.ts"
+  },
+  "keywords": [
+    "hwp",
+    "hwpx",
+    "docx",
+    "markdown",
+    "kordoc"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@myriaddreamin/typst-ts-web-compiler": "0.7.0",
+    "@myriaddreamin/typst.ts": "0.7.0",
+    "@xmldom/xmldom": "^0.8.15",
+    "jszip": "^3.10.1",
+    "markdown-it": "14.3.0",
+    "pdf-lib": "^1.17.1",
+    "pdfjs-dist": "4.10.38",
+    "prosemirror-commands": "1.7.2",
+    "prosemirror-history": "1.5.0",
+    "prosemirror-keymap": "1.2.3",
+    "prosemirror-model": "1.25.11",
+    "prosemirror-state": "1.4.4",
+    "prosemirror-tables": "1.8.5",
+    "prosemirror-view": "1.42.3",
+    "tesseract.js": "7.0.0",
+    "tesseract.js-core": "7.0.0"
+  },
+  "overrides": {
+    "@hono/node-server": "2.0.11",
+    "adm-zip": "0.6.1",
+    "body-parser": "2.3.0",
+    "esbuild": "0.28.1",
+    "fast-uri": "3.1.7",
+    "hono": "4.13.7",
+    "ip-address": "10.3.1",
+    "protobufjs": "8.7.1",
+    "sharp": "0.35.4",
+    "qs": "6.16.0"
+  },
+  "devDependencies": {
+    "@eslint/json": "0.14.0",
+    "@types/markdown-it": "14.1.2",
+    "@types/node": "^20.0.0",
+    "@typescript-eslint/parser": "8.65.0",
+    "esbuild": "0.28.1",
+    "eslint": "9.39.5",
+    "eslint-plugin-obsidianmd": "0.4.1",
+    "obsidian": "^1.5.0",
+    "playwright": "1.62.1",
+    "tslib": "^2.8.1",
+    "tsx": "4.21.0",
+    "typescript": "^5.8.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/laguna821/achmage-academic-editor-ultra.git"
+  }
+}

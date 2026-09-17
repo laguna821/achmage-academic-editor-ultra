@@ -1,0 +1,31 @@
+name: Verify independent journal plugin
+on:
+  push:
+    branches: ["0.1.0", "main"]
+  pull_request:
+permissions:
+  contents: read
+concurrency:
+  group: verify-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  check:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npm audit --omit=dev
+      - run: npm run check
+      - run: npm run docs:yaml
+      - run: git diff --exit-code -- templates docs/markdown-properties.md
+      - run: npx playwright install --with-deps chromium
+      - run: node scripts/test-journal-engine.mjs
+      - run: node scripts/test-journal-ocr.mjs

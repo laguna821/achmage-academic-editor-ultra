@@ -1,0 +1,10 @@
+{
+  "id": "achmage-academic-editor-ultra",
+  "name": "Achmage Academic Editor Ultra",
+  "version": "0.1.0",
+  "minAppVersion": "1.8.9",
+  "description": "Deterministic journal composition from Markdown or author DOCX, with PDF, IDML and native Affinity export.",
+  "author": "Achmage",
+  "authorUrl": "https://github.com/laguna821",
+  "isDesktopOnly": true
+}

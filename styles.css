@@ -1,0 +1,67 @@
+.aaeu-journal { display:flex; flex-direction:column; min-height:0; padding:0; }
+.aaeu-journal-start { flex:1; min-height:0; overflow:auto; padding:24px; width:100%; max-width:1000px; margin:0 auto; }
+.aaeu-journal-start[hidden], .aaeu-journal-workspace[hidden] { display:none; }
+.aaeu-journal-start h2 { margin-top:0; }
+.aaeu-journal-start-options { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(240px,100%),1fr)); gap:12px; margin:24px 0; }
+.aaeu-journal-start .aaeu-journal-start-option { display:flex; flex-direction:column; align-items:flex-start; gap:10px; height:auto; min-height:130px; padding:18px; text-align:left; white-space:normal; border:1px solid var(--background-modifier-border); background:var(--background-secondary); color:var(--text-normal); }
+.aaeu-journal-start-option span, .aaeu-journal-start-note { color:var(--text-muted); font-size:var(--font-ui-small); line-height:1.6; }
+.aaeu-journal-start-option:focus-visible { outline:2px solid var(--interactive-accent); outline-offset:2px; }
+.aaeu-journal-start-option:disabled { opacity:.55; }
+.aaeu-journal-start li { margin:8px 0; }
+.aaeu-journal-toolbar, .aaeu-journal-format { display:flex; align-items:center; flex-wrap:wrap; gap:5px; padding:8px; border-bottom:1px solid var(--background-modifier-border); }
+.aaeu-journal-toolbar button, .aaeu-journal-format button { font-size:12px; }
+.aaeu-journal-status { padding:6px 12px; font-size:12px; color:var(--text-muted); border-bottom:1px solid var(--background-modifier-border); white-space:pre-wrap; max-height:100px; overflow:auto; }
+.aaeu-journal-workspace { display:grid; grid-template-columns:minmax(270px, 1fr) minmax(310px, 1.15fr) 270px; flex:1; min-height:0; }
+.aaeu-journal-left { display:flex; flex-direction:column; min-height:0; min-width:0; }
+.aaeu-journal-editor { overflow:auto; flex:1; padding:16px; }
+.aaeu-journal-prose { outline:none; white-space:pre-wrap; overflow-wrap:anywhere; font-size:14px; line-height:1.55; min-height:200px; }
+.aaeu-journal-prose p { margin:0 0 12px; }
+.aaeu-journal-prose table { border-collapse:collapse; table-layout:fixed; width:100%; overflow:hidden; }
+.aaeu-journal-prose td,.aaeu-journal-prose th { min-width:1em; border:1px solid var(--background-modifier-border); padding:5px; vertical-align:top; position:relative; }
+.aaeu-journal-prose .selectedCell::after { content:""; position:absolute; inset:0; background:var(--text-selection); pointer-events:none; }
+.aaeu-journal-prose .ProseMirror-selectednode { outline:2px solid var(--interactive-accent); }
+.aaeu-journal-prose .ProseMirror-gapcursor { display:none; }
+.aaeu-journal-object { padding:12px; background:var(--background-secondary); border-left:3px solid var(--interactive-accent); margin:12px 0; }
+.aaeu-journal-revision { background:rgba(212,164,31,.17); text-decoration:underline dotted; }
+.aaeu-journal-citation { background:rgba(0,120,95,.1); }
+.aaeu-journal-inline-asset { border:1px dotted var(--text-muted); padding:1px 3px; }
+.aaeu-journal-preview { overflow:auto; padding:16px; background:var(--background-secondary); min-width:0; }
+.aaeu-journal-page { width:100%; position:relative; background:white; margin:0 auto 20px; box-shadow:0 2px 10px #0002; }
+.aaeu-journal-page canvas { width:100%; height:100%; display:block; }
+.aaeu-journal-box { position:absolute; border:1px solid transparent; cursor:move; touch-action:none; z-index:2; }
+.aaeu-journal-box.is-frame { z-index:1; pointer-events:none; }
+.aaeu-journal-box.is-metadata { cursor:pointer; z-index:3; touch-action:auto; }
+.aaeu-journal-box:hover,.aaeu-journal-box:focus { border-color:#008763; background:#00876308; outline:none; }
+.aaeu-journal-box.is-frame:focus { pointer-events:auto; }
+.aaeu-journal-resize { position:absolute; right:-4px; bottom:-4px; width:9px; height:9px; background:#008763; cursor:nwse-resize; opacity:0; pointer-events:auto; }
+.aaeu-journal-box:hover .aaeu-journal-resize,.aaeu-journal-box:focus .aaeu-journal-resize { opacity:1; }
+.aaeu-journal-right { overflow:auto; padding:10px; border-left:1px solid var(--background-modifier-border); }
+.aaeu-journal-field { display:flex; flex-direction:column; gap:4px; margin-bottom:10px; font-size:12px; }
+.aaeu-journal-field input,.aaeu-journal-field textarea,.aaeu-journal-field select { width:100%; }
+.aaeu-journal-field textarea { min-height:75px; resize:vertical; }
+.aaeu-journal-format .aaeu-journal-field { margin:0; flex-direction:row; align-items:center; }
+.aaeu-journal-card { padding:9px 0; border-bottom:1px solid var(--background-modifier-border); }
+.aaeu-journal-card p { margin:0 0 8px; overflow-wrap:anywhere; font-size:12px; }
+.aaeu-journal-card button,.aaeu-journal-inspector>button { margin:0 4px 6px 0; font-size:12px; }
+.aaeu-journal-original { padding:10px; background:var(--background-secondary); font-size:12px; }
+@media(max-width:1100px) { .aaeu-journal-workspace { grid-template-columns:minmax(230px,1fr) minmax(250px,1fr); } .aaeu-journal-right { grid-column:1 / -1; max-height:300px; border-top:1px solid var(--background-modifier-border); } }
+.aaeu-crop-modal { width: min(900px, 92vw); }
+.aaeu-crop-original { position: relative; max-width: 640px; margin: 12px auto; background: white; }
+.aaeu-crop-original > img { display: block; width: 100%; height: auto; }
+.aaeu-crop-rectangle { position: absolute; border: 2px solid #00895b; box-shadow: 0 0 0 1px white; pointer-events: none; }
+.aaeu-crop-preview { position: relative; overflow: hidden; width: min(400px, 100%); margin: 12px auto; background: white; border: 1px solid var(--background-modifier-border); }
+.aaeu-crop-preview > img { position: absolute; max-width: none; height: auto; }
+
+/* Journal appearance wizard: fixed engine, editable branding. */
+.aaeu-journal-template-modal { width: min(1100px, 94vw); max-width: 94vw; }
+.aaeu-journal-template-steps { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+.aaeu-journal-template-steps [aria-current="step"] { background: var(--interactive-accent); color: var(--text-on-accent); }
+.aaeu-journal-template-preview { height: min(62vh, 780px); overflow: auto; background: var(--background-secondary); padding: 12px; }
+.aaeu-journal-template-preview .aaeu-journal-box { pointer-events: none; }
+.aaeu-journal-template-modal small { display: block; color: var(--text-muted); margin-bottom: 12px; }
+
+.aaeu-journal .aaeu-hidden { display: none; }
+.aaeu-journal-editor > button { display: block; max-width:100%; white-space:normal; text-align:left; margin-block:6px; height:auto; }
+
+.aaeu-journal .aaeu-hidden { display: none; }
+.aaeu-journal-editor > button { display: block; max-width:100%; white-space:normal; text-align:left; margin-block:6px; height:auto; }
