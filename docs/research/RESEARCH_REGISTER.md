@@ -158,3 +158,4 @@ The journal editor is now developed independently as Achmage Academic Editor Ult
 
 - [R-041 — 독립 플러그인과 Markdown 원문 워크플로우](R-041-independent-markdown-editor.md)
 - [R-042 — Working guide and launch package · 0.1.1](R-042-launch-package.md)
+- [R-043 — Unified manuscript editor · 0.2.0](R-043-unified-manuscript-editor.md)

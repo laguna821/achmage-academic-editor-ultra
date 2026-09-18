@@ -1,3 +1,4 @@
+import {publicationSuffix,canonicalDoi} from './publication';
 import type {JournalPreset,JournalProject,JournalStyleRole} from "./types";
 
 export type FontGroup="body"|"heading"|"auxiliary";
@@ -8,7 +9,7 @@ export interface JournalAppearance {
   colors:{key:string;rule:string;abstract:string};
   journalName:string;
   logo:{mode:"hnmr"|"none"|"asset";assetId?:string};
-  mark:{mode:"crossmark"|"none"|"asset";assetId?:string};
+  mark:{mode:"crossmark"|"none"|"asset";assetId?:string;crossmark?:boolean};
   publicationText?:string;
   copyrightText?:string;
   leftHeader:{mode:"legacy"|"journal"|"title"|"text"|"none";text:string};
@@ -22,7 +23,7 @@ export const FONT_GROUPS:Record<FontGroup,JournalStyleRole[]>={
 export const academicChecks=(p:JournalProject):boolean=>p.preset.appearance?.kind!=="general";
 export const referenceChecks=(p:JournalProject):boolean=>p.document.journalMetadata?.referenceChecks??p.preset.appearance?.referenceChecks??true;
 export const TEXT_LIMITS={name:100,publication:400,copyright:1600,header:160,font:160} as const;
-export const TEXT_TOKENS=["journal","year","copyrightYear","title","runningTitle","volume","issue","firstPage","lastPage","page","doi"] as const;
+export const TEXT_TOKENS=["journal","year","copyrightYear","title","runningTitle","volume","issue","firstPage","lastPage","page","doi","publication","doiUrl"] as const;
 export function validateAppearance(value:unknown):JournalAppearance{
   if(!value||typeof value!=="object")throw new Error("템플릿 외형 정보가 없습니다.");
   const a=value as JournalAppearance;
@@ -36,19 +37,20 @@ export function validateAppearance(value:unknown):JournalAppearance{
   if(!a.leftHeader||!["legacy","journal","title","text","none"].includes(a.leftHeader.mode)||!templateText(a.leftHeader.text,160)||!a.rightHeader||!["page","text","text-page","none"].includes(a.rightHeader.mode)||!templateText(a.rightHeader.text,160))throw new Error("머리말 문구를 확인하세요.");
   for(const [value,max]of [[a.publicationText,400],[a.copyrightText,1600]] as const)if(value!==undefined&&!templateText(value,max))throw new Error("문구 길이나 삽입 변수를 확인하세요.");
   // Whitelist the public shape. Imported JSON cannot introduce engine settings.
-  return {version:1,kind:a.kind,referenceChecks:a.referenceChecks,fonts:{...a.fonts},...(a.substitutions?{substitutions:{...a.substitutions}}:{}),colors:{key:a.colors.key,rule:a.colors.rule,abstract:a.colors.abstract},journalName:a.journalName,logo:{mode:a.logo.mode,assetId:a.logo.assetId},mark:{mode:a.mark.mode,assetId:a.mark.assetId},publicationText:a.publicationText,copyrightText:a.copyrightText,leftHeader:{mode:a.leftHeader.mode,text:a.leftHeader.text},rightHeader:{mode:a.rightHeader.mode,text:a.rightHeader.text}};
+  return {version:1,kind:a.kind,referenceChecks:a.referenceChecks,fonts:{...a.fonts},...(a.substitutions?{substitutions:{...a.substitutions}}:{}),colors:{key:a.colors.key,rule:a.colors.rule,abstract:a.colors.abstract},journalName:a.journalName,logo:{mode:a.logo.mode,assetId:a.logo.assetId},mark:{mode:a.mark.mode,assetId:a.mark.assetId,...(a.mark.crossmark===true?{crossmark:true}:{})},publicationText:a.publicationText,copyrightText:a.copyrightText,leftHeader:{mode:a.leftHeader.mode,text:a.leftHeader.text},rightHeader:{mode:a.rightHeader.mode,text:a.rightHeader.text}};
 }
 export function appearanceFromPreset(p:JournalPreset):JournalAppearance{
   if(p.appearance)return validateAppearance(p.appearance);
   const m=p.master;
-  return {version:1,kind:"academic",referenceChecks:true,fonts:{},colors:{key:p.keyColor,rule:p.keyColor,abstract:p.abstract.fill},journalName:m?.journalName??"HEALTH & NEW MEDIA RESEARCH",
-    logo:m?.showLogo===false?{mode:"none"}:m?.logoAssetId?{mode:"asset",assetId:m.logoAssetId}:{mode:"hnmr"},
-    mark:m?.showCrossmark===false?{mode:"none"}:m?.crossmarkAssetId?{mode:"asset",assetId:m.crossmarkAssetId}:{mode:"crossmark"},
+  return {version:1,kind:"academic",referenceChecks:true,fonts:{},colors:{key:p.keyColor,rule:p.keyColor,abstract:p.abstract.fill},journalName:m?.journalName??"ACADEMIC EDITOR ULTRA",
+    logo:m?.showLogo===false?{mode:"none"}:m?.logoAssetId?{mode:"asset",assetId:m.logoAssetId}:{mode:"none"},
+    mark:m?.showCrossmark===false?{mode:"none"}:m?.crossmarkAssetId?{mode:"asset",assetId:m.crossmarkAssetId}:{mode:"none"},
     leftHeader:{mode:"legacy",text:""},rightHeader:{mode:"page",text:""}};
 }
 export function templateValues(p:JournalProject,page=1,lastPage=p.document.firstPage):Record<string,string>{
   const d=p.document,a=p.preset.appearance,issue=d.publication?.mode!=="aop";
-  return {journal:a?.journalName??p.preset.master?.journalName??"",year:d.year,copyrightYear:d.publication?.copyrightYear?.trim()||d.year,title:d.title,runningTitle:d.runningTitle||d.title,doi:d.doi,
+  const journal=a?.journalName??p.preset.master?.journalName??"";
+  return {publication:journal+publicationSuffix(d,lastPage),doiUrl:d.doi.trim()?"https://doi.org/"+canonicalDoi(d.doi):"",journal:a?.journalName??p.preset.master?.journalName??"",year:d.year,copyrightYear:d.publication?.copyrightYear?.trim()||d.year,title:d.title,runningTitle:d.runningTitle||d.title,doi:d.doi,
     volume:issue?d.volume:"",issue:issue?d.issue:"",firstPage:issue?String(d.firstPage):"",lastPage:issue?String(lastPage):"",page:issue?String(page):""};
 }
 export function resolveTemplateText(text:string,p:JournalProject,page=1,lastPage=p.document.firstPage):string{

@@ -4,15 +4,17 @@ import { MM, literal, pt } from "./syntax";
 import type { JournalMaster, JournalPreset, JournalProject, JournalStyleRole, JournalTextStyle } from "./types";
 import { canonicalDoi,copyrightYear,publicationMode,publicationSuffix,publicationRunning,articleRunning } from "./publication";
 
-export const HNMR_MASTER:JournalMaster={
+export const JOURNAL_MASTER:JournalMaster={
   enabled:true,publicationYpt:83.643,topRuleYpt:120.274,topRulePt:4,titleYpt:137.475,
   abstractWidthMm:104.273,abstractPadLeftMm:2.98,abstractPadRightMm:2.17,abstractPadTopMm:.74,abstractPadBottomMm:2.1393,sidebarGapMm:1.95,
   bottomRuleYpt:614.486,bottomRulePt:4,copyrightYpt:623.713,runningHeaderYpt:59.016,runningRuleYpt:72.785,runningRulePt:2,
   logoRightInsetPt:0,logoYpt:86.5,logoWidthPt:126.43,crossmarkRightInsetPt:-1.887,crossmarkYpt:52.404,crossmarkWidthPt:31.1,
   titleAfterPt:3.2,authorsAfterPt:1.75,affiliationsAfterPt:9.413,abstractLabelAfterPt:2.35,keywordsBeforePt:13.01,abstractAfterPt:8.71,correspondenceTopPt:1.87,correspondenceGapPt:10.5,
-  journalName:"HEALTH & NEW MEDIA RESEARCH",printIssn:"2671-4124",onlineIssn:"2951-2522",copyrightOwner:"Health & New Media Research",
-  licenseText:"This is an Open Access article distributed under the terms of the Creative Commons Attribution License (http://creativecommons.org/licenses/by/4.0) which permits unrestricted use, distribution, and reproduction in any medium, provided the original work is properly cited. http://hnmr.org"
+  journalName:"ACADEMIC EDITOR ULTRA",printIssn:"",onlineIssn:"",copyrightOwner:"",showLogo:false,showCrossmark:false,
+  licenseText:""
 };
+/** Legacy name retained for project readers. */
+export const HNMR_MASTER=JOURNAL_MASTER;
 export const resolvedMaster=(p:JournalPreset):JournalMaster=>({...HNMR_MASTER,...p.master});
 export const journalSpacing=(p:JournalPreset):NonNullable<JournalPreset["spacing"]>=>({floatBeforeMm:p.gapMm,floatAfterMm:p.gapMm,captionGapPt:3,noteGapPt:3,headingBeforePt:12,headingAfterPt:1,...p.spacing});
 export const headingSpacing=(p:JournalPreset,level:number):{beforePt:number;afterPt:number;followingHeadingPt:number}=>({beforePt:journalSpacing(p).headingBeforePt,afterPt:journalSpacing(p).headingAfterPt,followingHeadingPt:1.9525,...p.headingSpacing?.[Math.min(5,Math.max(1,level)) as 1]});
@@ -67,7 +69,7 @@ export function masterBackground(project:JournalProject,headers?:{even:string;od
   const logo=m.showLogo===false?"":place(right-m.logoRightInsetPt-m.logoWidthPt,m.logoYpt,m.logoWidthPt,`[${image(m.logoAssetId,"/brand/hnmr-logo.svg",m.logoWidthPt,Math.max(1,m.topRuleYpt-m.topRulePt/2-m.logoYpt-4))}]`);
   const markImage=image(m.crossmarkAssetId,"/brand/crossmark.svg",m.crossmarkWidthPt,m.crossmarkWidthPt);
   const link="https://crossmark.crossref.org/dialog/?doi="+encodeURIComponent(canonicalDoi(d.doi))+"&domain=pdf";
-  const mark=m.showCrossmark===false?"":place(right-m.crossmarkRightInsetPt-m.crossmarkWidthPt,m.crossmarkYpt,m.crossmarkWidthPt,`[${d.doi&&(!a||a.mark.mode==="crossmark")?`#link(${literal(link)})[${markImage}]`:markImage}]`);
+  const mark=m.showCrossmark===false?"":place(right-m.crossmarkRightInsetPt-m.crossmarkWidthPt,m.crossmarkYpt,m.crossmarkWidthPt,`[${d.doi&&(!a||(a.mark.mode==="crossmark"||a.mark.crossmark===true))?`#link(${literal(link)})[${markImage}]`:markImage}]`);
   const defaultCopyright=styled(s.copyright,`#text(${literal(`Copyright © ${copyrightYear(d)} ${m.copyrightOwner}`)})#linebreak()#text(${literal(m.licenseText)})`);
   const copyright=a?.copyrightText!==undefined?styled(s.copyright,`#text(${literal(resolveTemplateText(a.copyrightText,project,d.firstPage,last))})`):defaultCopyright;
   const defaultHeader=styled(s.runningHeader,`#context if calc.rem(counter(page).get().first()+${d.firstPage}-1,2)==0 {text(${literal(headers?.even??publicationRunning(d,m.journalName))})} else {text(${literal(headers?.odd??articleRunning(d))})}`);

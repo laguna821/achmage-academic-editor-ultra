@@ -11,7 +11,7 @@ aaeu-author-1-name: "The Achmage workflow"
 aaeu-author-1-affiliations: [1]
 aaeu-affiliation-1-text: "A demonstration manuscript you can edit"
 aaeu-corresponding-name: "Start with a small change"
-aaeu-corresponding-address: "Edit the title or abstract in this Markdown note. Then choose Compose."
+aaeu-corresponding-address: "Edit the title or abstract in the manuscript panel. Then choose Refresh preview."
 aaeu-corresponding-email: ""
 aaeu-sidebar-received-hide: true
 aaeu-sidebar-revised-hide: true
@@ -35,7 +35,7 @@ Academic Editor Ultra brings structured writing and careful composition into the
 
 ### Try it before reading the whole guide
 
-Find `aaeu-title` in the properties at the top of this note. Replace the title with a sentence of your own. Open the journal workspace and choose **Compose**. The first-page title changes while its font, position and surrounding space are still handled by the selected template. Next, change a sentence inside `aaeu-abstract` and compose once more.
+Open **Basic information** in the manuscript panel. Replace the title with a sentence of your own, then choose **Refresh preview**. The first-page title changes while its font, position and surrounding space are still handled by the selected template. Next, open **Abstract and keywords**, change a sentence and refresh again. The linked Markdown note receives both changes.
 
 This small experiment captures the central idea. You supply the information once, in a place you already know how to edit. The document gives that information a consistent visual home. Figure 1 shows how this connected workflow continues beyond the proof. The same approach works for author names, affiliations, correspondence, running heads and statements that need to appear before the references.
 
@@ -65,7 +65,7 @@ Note. These are mapping examples, not measurements. The same text is not maintai
 
 ### Keep the article and the appearance distinct
 
-A template supplies a consistent visual identity. Try **Journal of Achmage** in deep navy, then **Journal of Command & Space** in teal and pink. Both include original vector PDF logo artwork. In **Journal template**, choose a preset, preview your manuscript and apply it. Your words remain unchanged. Select logos, a key color, the abstract background and recurring publication text without rebuilding the page geometry. Article properties supply the information that changes from one manuscript to the next. Empty overrides can inherit the template; explicit hide properties let you omit a field intentionally.
+A template supplies a consistent visual identity. Try **Journal of Achmage** in deep navy, then **Journal of Command & Space** in teal and pink. Both include original vector PDF logo artwork. Choose a preset from the top **Template** list; it applies immediately. Your words remain unchanged. Select logos, a key color, the abstract background and recurring publication text without rebuilding the page geometry. Article properties supply the information that changes from one manuscript to the next. Empty overrides can inherit the template; explicit hide properties let you omit a field intentionally.
 
 You can inspect all dedicated properties from the journal workspace. The full template is available when you need it, but this guide only fills the properties it uses. Author lists, sidebar entries and additional closing statements can grow with the article. A short guide and a detailed journal submission can use the same underlying composition path.
 

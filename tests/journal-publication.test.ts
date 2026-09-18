@@ -19,7 +19,7 @@ test("publication approval is invalidated by changed metadata, page count or rol
   assert.ok(publicationReviewed(p,12));assert.ok(!publicationReviewed(p,13));
   const history=new JournalHistory(p);history.change(p=>{p.document.year="2027";});assert.ok(!publicationReviewed(history.current,12));history.undo();assert.ok(publicationReviewed(history.current,12));
   history.change(p=>{p.document.publication!.mode="aop";});assert.ok(!publicationReviewed(history.current,12));
-  history.undo();history.change(p=>{p.preset.master!.showLogo=false;});assert.ok(!publicationReviewed(history.current,12));
+  history.undo();history.change(p=>{p.preset.master!.showLogo=!p.preset.master!.showLogo;});assert.ok(!publicationReviewed(history.current,12));
 });
 test("heading spacing distinguishes body gaps and consecutive heading transitions",()=>{
   const p=createJournalProject();assert.equal(headingSpacing(p.preset,2).beforePt,12);assert.equal(headingTransition(p.preset,1,2),1.9525);

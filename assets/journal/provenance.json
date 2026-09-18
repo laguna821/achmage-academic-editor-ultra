@@ -1,24 +1,9 @@
 {
-  "hnmr-logo.svg": {
-    "source": "User-supplied HMRI 로고 2024.pdf",
-    "sha256": "e746e6a8b9420ed99116dc2142be80724b876665a7f2f514b025fbc73e7b4b2d"
-  },
   "crossmark.svg": {
     "source": "https://crossmark-cdn.crossref.org/widget/v2.0/logos/CROSSMARK_Color_square.svg",
     "documentation": "https://www.crossref.org/documentation/crossmark/participating-in-crossmark/",
     "retrieved": "2026-09-17",
     "sha256": "c86e5592327651c740c761aef1bec78fa04d5552dc1a7dcae75ec9a26d56eb05",
     "note": "Official vector PDF button artwork; unchanged SVG, replaces 108px raster extracted from a published PDF."
-  },
-  "legacyCrossmarkExtraction": {
-    "source": "https://hnmr.org/upload/pdf/hnmr-2026-00094.pdf",
-    "page": 1,
-    "clipPt": [
-      430.0,
-      52.404,
-      461.1,
-      83.504
-    ],
-    "sha256": "3eff3e7c9fdb7f8a34a52b6523b54d380cacf5a9ce1e06fa804f1aaa1d183cab"
   }
 }

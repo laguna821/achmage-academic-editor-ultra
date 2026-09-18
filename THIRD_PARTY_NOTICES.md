@@ -1,5 +1,14 @@
 # Third-Party Notices
 
+## Academic Editor Ultra 0.2.0 manuscript editor
+
+CodeMirror's Markdown/HTML/CSS/JavaScript language packages and their Lezer
+parsers use the MIT license. The `yaml` package uses the ISC license. Their
+complete copyright notices and licenses are retained in
+[editor-licenses.txt](assets/journal/editor-licenses.txt) and in the distributed
+`main.js` banner. CodeMirror's editor/state/commands runtime is provided by
+Obsidian rather than bundled a second time.
+
 ## Journal OCR
 
 HanMark 3.0 development builds bundle Tesseract.js 7.0.0, Tesseract.js-core

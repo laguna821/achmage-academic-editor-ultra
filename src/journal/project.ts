@@ -5,7 +5,7 @@ import {editorialDefaults,endMatterDefaults} from './editorial';
 import {validateAppearance} from './appearance';
 
 export const HNMR_PRESET: JournalPreset = {
-  schemaVersion: 1, id: "hnmr-unified-v1", name: "HNMR 통일 조판",
+  schemaVersion: 1, id: "academic-unified-v1", name: "Academic composition",
   page: { widthMm: 182, heightMm: 257, marginLeftMm: 20, marginRightMm: 20, topMm: 28, bottomMm: 20, gutterMm: 4 },
   body: { font: "Times New Roman", sizePt: 10, leadingPt: 12, indentMm: 2.5, language: "en", trackingEm: 0 },
   title: { font: "Calibri", sizePt: 15 }, abstract: { font: "Garamond", sizePt: 8.3, leadingPt: 9.13, fill: "#f0f1f1" },
@@ -110,7 +110,7 @@ export function validateProject(value: unknown): JournalProject {
   for (const n of Object.values(project.preset.page)) if (typeof n !== "number" || !Number.isFinite(n) || n < 0 || n > 2000) throw new Error("잘못된 페이지 규격입니다.");
   const page=project.preset.page;
   if(page.widthMm-page.marginLeftMm-page.marginRightMm-page.gutterMm<50||page.heightMm-page.topMm-page.bottomMm<60)throw new Error("본문 영역이 너무 작습니다.");
-  for(const o of project.overrides)if(!string(o.id)||!number(o.page,1,500)||!Number.isInteger(o.page)||!number(o.x,0,6000)||!number(o.y,0,6000)||!number(o.width,30,6000)||(o.height!==undefined&&!number(o.height,20,6000)))throw new Error("잘못된 고정 배치입니다.");
+  for(const o of project.overrides)if(o.snapLane!==undefined&&!['left','right','full'].includes(o.snapLane)||!string(o.id)||!number(o.page,1,500)||!Number.isInteger(o.page)||!number(o.x,0,6000)||!number(o.y,0,6000)||!number(o.width,30,6000)||(o.height!==undefined&&!number(o.height,20,6000)))throw new Error("잘못된 고정 배치입니다.");
   if(project.preset.master){
     const m=resolvedMaster(project.preset);project.preset.master=m;
     for(const key of ["showLogo","showCrossmark"] as const)if(m[key]!==undefined&&typeof m[key]!=="boolean")throw new Error("잘못된 마스터 표시 설정입니다.");

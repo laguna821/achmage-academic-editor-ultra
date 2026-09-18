@@ -3,11 +3,11 @@ import {finalizeEditableThreads,validateEditableLayout,type EditableLayoutSnapsh
 import {captureParagraph,captureInlines,EDITABLE_WORD_SPACING,type CapturedParagraph} from './editableCapture';
 import {NO_ADJUSTMENT} from './quality';
 import type {ResolvedJournalSpec} from './master';
-import {academicChecks,customHeader,resolveTemplateText} from './appearance';
+import {customHeader,resolveTemplateText} from './appearance';
 import {copyrightYear,publicationMode,publicationRunning,articleRunning,publicationSuffix,canonicalDoi} from './publication';
 import {JOURNAL_BRAND_ASSETS} from './embedded.generated';
 import {chartSvg} from './charts';
-import {reviewTitle,MISSING_CORRESPONDENCE,missingFigureSvg,missingFigureMessage} from './missingContent';
+import {reviewTitle,missingFigureSvg,missingFigureMessage} from './missingContent';
 import {tableGrid} from './tableGeometry';
 import {imageInfo} from './imageInfo';
 import {tableNoteGroups,tableNoteStyle} from './tableNotes';
@@ -92,20 +92,14 @@ export async function journalEditableSnapshot(result:LayoutResult,store:BinarySt
     const label=simple('abstract-label:'+b.page,b.fragment?'Abstract (continued):':'Abstract:','abstractLabel');s.styles.abstractLabel.after=m.abstractLabelAfterPt;
     let offset=boxes.filter(q=>q.kind==='abstract'&&q.page<b.page).reduce((n,q)=>n+(q.text?.length??0),0),remaining=b.text?.length??0;const ps:EditParagraph[]=[];
     for(const a of d.abstract){const length=inlineText(visibleInlines(a.content,p.changes)).length;if(offset>=length+1){offset-=length+1;continue;}const take=Math.min(length-offset,remaining);if(take>0)ps.push({...para(a,'abstract'),id:a.id+':'+b.page,runs:inlines(sliceInlines(a.content,offset,offset+take))});remaining-=take+1;offset=0;if(remaining<=0)break;}
-    const last=!boxes.some(q=>q.kind==='abstract'&&q.page>b.page);if(last){s.styles.keywords.before=m.keywordsBeforePt;ps.push(simple('keywords',d.keywords.join(', '),'keywords'));ps.at(-1)!.runs.unshift({text:'Keywords: ',color:p.preset.keyColor,bold:true});}
+    const last=!boxes.some(q=>q.kind==='abstract'&&q.page>b.page);if(last&&d.keywords.length){s.styles.keywords.before=m.keywordsBeforePt;ps.push(simple('keywords',d.keywords.join(', '),'keywords'));ps.at(-1)!.runs.unshift({text:'Keywords: ',color:p.preset.keyColor,bold:true});}
     text('abstract', {x:b.x+padding.left,y:b.y+padding.top,width:b.width-padding.left-padding.right,height:b.height-padding.top-padding.bottom},b.page,[label,...ps]);
   }
   const correspondence=boxes.find(b=>b.nodeId==='correspondence'&&b.kind==='front');
   if(correspondence){const ps:EditParagraph[]=[];
-    if(!d.journalMetadata){for(const [label,value]of [['Received: ',d.received],['Revised: ',d.revised],['Accepted: ',d.accepted]])if(value)ps.push({id:label,sourceId:'correspondence',style:'sidebar',runs:[{text:label,bold:true,color:styles.sidebarLabel.color},{text:value}]});
-    if(academicChecks(p)||d.authors.some(a=>a.corresponding)){s.styles['correspondence-label']={...s.styles.sidebarLabel,before:ps.length?m.correspondenceGapPt:0};ps.push(simple('correspondence-label','Corresponding author:','correspondence-label'));}
-    for(const a of d.authors.filter(a=>a.corresponding))ps.push(simple('correspondence:'+a.name,[a.name,a.address||a.affiliations.map(index=>d.affiliations[Number(index)-1]??'').join('\n'),a.email?'Email: '+a.email:''].filter(Boolean).join('\n'),'sidebar'));
-    if(academicChecks(p)&&!d.authors.some(a=>a.corresponding&&(a.name.trim()||a.address?.trim()||a.email?.trim()||a.affiliations.some(i=>d.affiliations[Number(i)-1]?.trim()))))ps.push(simple('correspondence-missing',MISSING_CORRESPONDENCE,'sidebar'));
-    }else{
     for(const [i,item]of sidebarItems(p).entries()){
       const style='sidebar:'+item.id;s.styles[style]={...s.styles.sidebar,before:i&&item.separate?m.correspondenceGapPt:0};
       ps.push({id:item.id,sourceId:'correspondence',style,runs:[{text:item.label,bold:true,color:styles.sidebarLabel.color},...(item.separate?[{text:'\n'}]:[]),{text:item.text}]});
-    }
     }
     text('correspondence',correspondence,correspondence.page,ps);s.frames.at(-1)!.contentInsetTop=m.correspondenceTopPt;
   }

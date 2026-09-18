@@ -36,14 +36,15 @@ export async function exportAf(s:EditableLayoutSnapshot,resources:AfResource[],f
   const zip=new JSZip(),fileDate=new Date('2026-09-17T00:00:00Z');
   const add=(name:string,value:Uint8Array|string):void=>{zip.file(name,value,{date:fileDate});};
   add('document.af',af);add('reference.pdf',referencePdf);
-  const assets=[];
+  const assets:{id:string;file:string;sha256:string}[]=[];
   for(const [i,a]of s.assets.entries()){
     const name=`originals/${i+1}-${a.name.replace(/[^\p{L}\p{N}._-]/gu,'_').slice(0,100)}`;
     add(name,a.bytes);assets.push({id:a.id,file:name,sha256:sha256Bytes(a.bytes)});
   }
+  const embeddedAssets=resources.map((resource,i)=>{const name=`embedded/${i+1}-${resource.name.replace(/[^\p{L}\p{N}._-]/gu,'_').slice(0,100)}.pdf`;add(name,resource.bytes);return {id:resource.id,file:name,sha256:sha256Bytes(resource.bytes),mime:resource.mime,originalAsset:assets.find(a=>a.id===resource.id)?.file,preview:{width:resource.previewWidth,height:resource.previewHeight,role:'display-cache-only'}};});
   const {stories,...report}=out.report;
-  add('export-report.json',JSON.stringify({...report,stories:stories.map(({text,...st})=>({...st,textSha256:sha256Bytes(new TextEncoder().encode(text))})),originalAssets:assets,afSha256:sha256Bytes(af),capacity:'unmeasured-native-reflow',issues},null,2));
-  add('README.ko.txt','HanMark AF 편집 패키지 (실험 기능)\n\nAffinity에서 document.af를 여세요. 본문 박스는 왼쪽 → 오른쪽 → 다음 페이지 순서로 연결돼 있습니다. 표와 그림은 별도 객체입니다.\n\nreference.pdf는 HanMark 조판 기준본입니다. Affinity의 줄바꿈·단어 간격 때문에 같은 내용이 다른 위치에 보일 수 있습니다. 텍스트가 넘쳐도 원문은 본문 안에 보존됩니다. 마지막 박스를 더 큰 박스나 다음 페이지의 박스에 연결하면 이어서 편집할 수 있습니다. 추가 연결 페이지를 선택했다면 문서 끝의 빈 박스까지 이미 연결돼 있습니다. 추가 페이지는 편집 공간이며 머리말·쪽수·발행정보를 최종 확인하세요.\n\n글꼴은 함께 배포하지 않습니다. export-report.json에 표시된 글꼴이 설치된 컴퓨터에서 여세요. 원본 그림은 originals 폴더에 보존합니다. AF 안에는 그림의 PDF 표현과 미리보기가 내장됩니다. 본문을 고친 뒤 원래 Markdown/DOCX로 자동 역반영하지 않습니다.\n');
+  add('export-report.json',JSON.stringify({...report,stories:stories.map(({text,...st})=>({...st,textSha256:sha256Bytes(new TextEncoder().encode(text))})),originalAssets:assets,embeddedAssets,afSha256:sha256Bytes(af),capacity:'unmeasured-native-reflow',issues},null,2));
+  add('README.ko.txt','Academic Editor Ultra AF 편집 패키지\n\nAffinity에서 document.af를 여세요. 본문 박스는 왼쪽 → 오른쪽 → 다음 페이지 순서로 연결돼 있습니다. 표와 그림은 별도 객체입니다.\n\nreference.pdf는 Academic Editor Ultra 조판 기준본입니다. Affinity의 줄바꿈·단어 간격 때문에 같은 내용이 다른 위치에 보일 수 있습니다. 텍스트가 넘쳐도 원문은 본문 안에 보존됩니다. 마지막 박스를 더 큰 박스나 다음 페이지의 박스에 연결하면 이어서 편집할 수 있습니다. 추가 연결 페이지를 선택했다면 문서 끝의 빈 박스까지 이미 연결돼 있습니다. 추가 페이지는 편집 공간이며 머리말·쪽수·발행정보를 최종 확인하세요.\n\n글꼴은 함께 배포하지 않습니다. export-report.json에 표시된 글꼴이 설치된 컴퓨터에서 여세요. 원본 그림은 originals 폴더에 보존합니다. AF 안에는 그림의 PDF 표현과 미리보기가 내장됩니다. 본문을 고친 뒤 원래 Markdown/DOCX로 자동 역반영하지 않습니다.\n');
   const pack=await zip.generateAsync({type:'uint8array',compression:'DEFLATE',compressionOptions:{level:6}},()=>afActive(options.signal));
   afActive(options.signal);return {af,package:pack,issues,snapshot:s};
 }

@@ -5,7 +5,7 @@ $probeRoot=[IO.Path]::GetFullPath((Join-Path (Get-Location) 'test-artifacts/jour
 $probeTarget=[IO.Path]::GetFullPath($Target)
 if(-not $probeTarget.StartsWith($probeRoot+[IO.Path]::DirectorySeparatorChar,[StringComparison]::OrdinalIgnoreCase)){throw 'Probe output must stay in update-3.2.0 artifacts'}
 if(Test-Path -LiteralPath $probeTarget){throw 'Refusing to overwrite prior evidence'}
-$affinityProcess=Get-Process Affinity | Select-Object -First 1
+$affinityProcess=Get-Process Affinity | Where-Object {$_.MainWindowHandle -ne 0} | Select-Object -First 1
 if(-not $affinityProcess){throw 'Affinity is not running'}
 $condition=New-Object System.Windows.Automation.PropertyCondition([System.Windows.Automation.AutomationElement]::ProcessIdProperty,$affinityProcess.Id)
 for($attempt=0;$attempt -lt 5;$attempt++) {

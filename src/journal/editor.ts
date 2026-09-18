@@ -1,5 +1,5 @@
 import { Schema, type Node as PMNode, type Mark, type NodeSpec } from "prosemirror-model";
-import { EditorState } from "prosemirror-state";
+import { EditorState,Selection,NodeSelection } from "prosemirror-state";
 import { EditorView } from "prosemirror-view";
 import { baseKeymap, toggleMark, setBlockType } from "prosemirror-commands";
 import { keymap } from "prosemirror-keymap";
@@ -78,6 +78,9 @@ export class JournalTextEditor{
       attributes:{class:"aaeu-journal-prose",role:"textbox","aria-label":"원고 편집","aria-multiline":"true"}});
   }
   replace(project:JournalProject):void{const tr=this.view.state.tr.replaceWith(0,this.view.state.doc.content.size,editorDocument(project).content);this.view.updateState(this.view.state.apply(tr));}
+  focusNode(id:string):void{
+    let found=false;this.view.state.doc.descendants((node,pos)=>{if(found)return false;if(attrs(node).id!==id)return;found=true;const selection=node.isAtom?NodeSelection.create(this.view.state.doc,pos):Selection.near(this.view.state.doc.resolve(pos+1));this.view.dispatch(this.view.state.tr.setSelection(selection).scrollIntoView());this.view.focus();return false;});
+  }
   format(name:"bold"|"italic"):void{toggleMark(journalSchema.marks[name])(this.view.state,this.view.dispatch);this.view.focus();}
   heading(level:number):void{setBlockType(journalSchema.nodes.paragraph,{level,id:newId("p")})(this.view.state,this.view.dispatch);this.view.focus();}
   table(action:"row"|"column"|"deleteRow"|"deleteColumn"|"merge"|"split"):void{({row:addRowAfter,column:addColumnAfter,deleteRow,deleteColumn,merge:mergeCells,split:splitCell})[action](this.view.state,this.view.dispatch);this.view.focus();}

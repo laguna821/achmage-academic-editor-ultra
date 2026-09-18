@@ -6,17 +6,25 @@ Write in Markdown. Compose a journal. Keep the last edit yours.
 
 ![One Markdown manuscript, two custom journals](docs/media/en-01.png)
 
-[한국어](README.ko.md) · [Download 0.1.1](https://github.com/laguna821/achmage-academic-editor-ultra/releases/tag/0.1.1) · [Working samples](https://github.com/laguna821/achmage-academic-editor-ultra/releases/download/0.1.1/aaeu-working-samples-0.1.1.zip) · [90-second demo](docs/launch/videos.md)
+[한국어](README.ko.md) · [Download 1.0.0](https://github.com/laguna821/achmage-academic-editor-ultra/releases/tag/1.0.0) · [Working samples](https://github.com/laguna821/achmage-academic-editor-ultra/releases/download/1.0.0/aaeu-working-samples-1.0.0.zip) · [90-second demo](docs/launch/videos.md)
 
 An Obsidian plugin for researchers and editors who want a carefully composed paper without rebuilding every page by hand. Start with a Markdown note or an author's Word manuscript. Create a PDF, then export an editable Affinity document when the final adjustment belongs in a design application.
 
 ## The guide is a manuscript you can try
 
-Choose **Open sample manuscript**. Its working guide has an abstract, correspondence, figures, tables, notes and closing statements. Change its title in Markdown and choose **Compose**. The page follows your words.
+**1.0.0:** edit Word and Markdown beside the proof. Click a printed field to
+edit it, switch templates instantly, and keep figures aligned to a column or the
+full page width. Saving is automatic; **Refresh preview** puts composition under
+your control. [Changes and verification](docs/launch/release-1.0.0.md).
+
+[Watch in English](https://youtu.be/cMVZ1uaMRdk) · [한국어 영상](https://youtu.be/ObFFGrG0EB4).
+The 90-second films show 0.1.1; the screenshots show 1.0.0.
+
+Choose **Open sample manuscript**. Its working guide has an abstract, correspondence, figures, tables, notes and closing statements. Change its title in the manuscript panel and choose **Refresh preview**. The page follows your words.
 
 English and Korean samples are included offline. Opening the guide again preserves your edits; **Create a fresh copy** starts another experiment.
 
-[English manuscript](examples/welcome/en.md) · [한국어 원고](examples/welcome/ko.md) · [Navy PDF](https://github.com/laguna821/achmage-academic-editor-ultra/releases/download/0.1.1/achmage-en.pdf) · [Command & Space PDF](https://github.com/laguna821/achmage-academic-editor-ultra/releases/download/0.1.1/command-space-en.pdf) · [Editable AF example](https://github.com/laguna821/achmage-academic-editor-ultra/releases/download/0.1.1/command-space-en.af.zip)
+[English manuscript](examples/welcome/en.md) · [한국어 원고](examples/welcome/ko.md) · [Navy PDF](https://github.com/laguna821/achmage-academic-editor-ultra/releases/download/1.0.0/achmage-en.pdf) · [Command & Space PDF](https://github.com/laguna821/achmage-academic-editor-ultra/releases/download/1.0.0/command-space-en.pdf) · [Editable AF example](https://github.com/laguna821/achmage-academic-editor-ultra/releases/download/1.0.0/command-space-en.af.zip)
 
 ## Write where you think
 
@@ -29,6 +37,8 @@ Use headings, paragraphs, emphasis, lists, image links and Markdown tables. YAML
 ## Same paper. Your journal.
 
 ![Two journal identities applied to the same source](docs/media/en-03.png)
+
+Three public presets are included: **Academic Editor Ultra**, **Journal of Achmage** and **Journal of Command & Space**. Each also ships as a self-contained template ZIP; import or export it from **Template library**. Private journal presets belong to your local library.
 
 Choose **Journal of Achmage** for deep navy, or **Journal of Command & Space** for teal and pink. Both include vector PDF logos. Duplicate a preset and use a short wizard to change logos, colors, fonts, running heads and publication text. The established composition rules stay consistent.
 
@@ -48,11 +58,12 @@ PDF is the composed result. AF and IDML let you continue in a design tool. Suppo
 
 Affinity uses its own text engine: check line breaks and the final linked frame after editing. Unsupported export cases are reported. Changes in Affinity do not synchronize back to Markdown. The sample demonstrates supported features; it is not a promise of universal compatibility.
 
-## Install the preview release
+## Install
 
-This independent plugin is **0.1.1**, separate from HanMark. It does not require HanMark. It is not yet listed in the Community directory; install the release files below.
+**1.0.0** is independent of HanMark. Community directory review is separate
+from the GitHub release; use the release ZIP while the listing is being reviewed.
 
-1. Download `achmage-academic-editor-ultra-0.1.1.zip` from [Releases](https://github.com/laguna821/achmage-academic-editor-ultra/releases/tag/0.1.1).
+1. Download `achmage-academic-editor-ultra-1.0.0.zip` from [Releases](https://github.com/laguna821/achmage-academic-editor-ultra/releases/tag/1.0.0).
 2. Extract its three files into `<vault>/.obsidian/plugins/achmage-academic-editor-ultra/`.
 3. Reload Obsidian, enable **Achmage Academic Editor Ultra**, then choose **Open sample manuscript**.
 

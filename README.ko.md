@@ -6,17 +6,19 @@
 
 ![두 가지 저널로 조판한 실제 원고](docs/media/ko-01.png)
 
-[English](README.md) · [0.1.1 다운로드](https://github.com/laguna821/achmage-academic-editor-ultra/releases/tag/0.1.1) · [시연 영상](docs/launch/videos.md) · [전체 샘플](https://github.com/laguna821/achmage-academic-editor-ultra/releases/download/0.1.1/aaeu-working-samples-0.1.1.zip)
+[English](README.md) · [1.0.0 다운로드](https://github.com/laguna821/achmage-academic-editor-ultra/releases/tag/1.0.0) · [시연 영상](docs/launch/videos.md) · [전체 샘플](https://github.com/laguna821/achmage-academic-editor-ultra/releases/download/1.0.0/aaeu-working-samples-1.0.0.zip)
 
-Obsidian에서 Markdown 또는 저자의 Word 원고를 저널 형태로 조판하는 독립 플러그인입니다. HanMark의 조판 코드를 기반으로 분리한 **0.1.1 미리보기 버전**입니다. HanMark를 설치하지 않아도 동작하며, 두 플러그인을 함께 사용할 수 있습니다.
+Obsidian에서 Markdown 또는 저자의 Word 원고를 저널 형태로 조판하는 독립 플러그인입니다. **1.0.0 공개 릴리즈**입니다. 소개 이미지는 1.0.0이며, 기존 90초 영상은 0.1.1 기준입니다. HanMark를 설치하지 않아도 동작하며, 두 플러그인을 함께 사용할 수 있습니다.
+
+**1.0.0:** 왼쪽 안내형 원고 편집, 미리보기 클릭으로 입력란 찾기, Markdown 원문 역반영, 템플릿 즉시 선택을 지원합니다. 저장은 자동이고 미리보기는 기본적으로 **↻ 미리보기 갱신**을 눌러 갱신합니다. [변경 안내와 검증](docs/launch/release-1.0.0.md).
 
 ## 설명서 자체로 시험해 보세요
 
-**설명서 원고로 시작**을 누르면 초록·교신저자·그림·표·주석·말미 선언문이 포함된 영문 또는 국문 원고가 열립니다. 마크다운에서 제목을 고치고 **조판**을 누르세요. 기존 샘플은 수정 내용을 유지하며, **새 사본 만들기**로 다시 시작할 수 있습니다.
+**설명서 원고로 시작**을 누르면 초록·교신저자·그림·표·주석·말미 선언문이 포함된 영문 또는 국문 원고가 열립니다. 왼쪽에서 제목을 고치고 **↻ 미리보기 갱신**을 누르세요. 기존 샘플은 수정 내용을 유지하며, **새 사본 만들기**로 다시 시작할 수 있습니다.
 
 ![평소와 같은 마크다운 작성](docs/media/ko-02.png)
 
-**Journal of Achmage**의 딥네이비, **Journal of Command & Space**의 틸·핑크 프리셋이 기본으로 들어 있습니다. 로고는 벡터 PDF로 보존합니다. 템플릿 위자드에서 프리셋을 바꾸고 미리보기 후 적용하면 원고 내용은 그대로 유지됩니다.
+**Journal of Achmage**의 딥네이비, **Journal of Command & Space**의 틸·핑크 프리셋이 기본으로 들어 있습니다. 로고는 벡터 PDF로 보존합니다. 상단 템플릿 목록에서 즉시 적용하며 원고 내용은 유지됩니다. 템플릿을 만들거나 수정할 때만 위자드를 사용합니다.
 
 ![같은 원고에 서로 다른 저널 프리셋 적용](docs/media/ko-03.png)
 
@@ -32,13 +34,13 @@ Obsidian에서 Markdown 또는 저자의 Word 원고를 저널 형태로 조판�
 
 1. 리본의 **Academic Editor Ultra** 또는 명령 팔레트의 **저널 편집 열기**를 실행합니다.
 2. **새 Markdown 원고**에서 저널 템플릿을 선택합니다. 전체 `aaeu-*` YAML 속성과 본문 골격이 생성됩니다.
-3. Markdown에서 속성과 본문을 작성하고 **조판**을 누릅니다. PDF 미리보기, 검사 결과, PDF·IDML·AF 내보내기가 같은 프로젝트에 있습니다.
+3. 왼쪽 안내형 속성과 Markdown 본문을 작성하고 **↻ 미리보기 갱신**을 누릅니다. PDF 미리보기, 검사 결과, PDF·IDML·AF 내보내기가 같은 프로젝트에 있습니다.
 
 기존 노트는 **현재 Markdown 원문으로 저널 시작**으로 연결합니다. 원래 YAML과 본문을 자동 수정하지 않습니다. 속성 안내에서 필요한 항목을 복사할 수 있습니다. 기존 `title`, `abstract`, `keywords`, `runningTitle` 등의 입력도 지원합니다.
 
 ## 두 가지 입력 경로
 
-- **Markdown 원문 모드:** 내용은 Markdown에만 작성합니다. 저널 화면은 원문 위치 이동, 검사, 템플릿·배치 조정과 출력에 사용합니다. 원문 수정·이름 변경·로컬 이미지 변경을 추적하며 출력 전에 다시 확인합니다.
+- **Markdown 원문 모드:** 통합 편집기와 원래 Obsidian 노트 모두 같은 `.md`를 수정합니다. 안내형 속성·본문·고급 YAML 보기를 제공하고 원문 수정·이름 변경·로컬 이미지 변경을 추적합니다. 외부 수정과 충돌하면 편집 사본을 남기고 차이를 보여줍니다.
 - **Word 편집본:** 저자가 보낸 DOCX를 가져와 기존 본문 편집기에서 정리·검토합니다. 기존 저널 편집 기능을 유지합니다.
 
 프로젝트는 `Academic Editor Ultra/`에 저장합니다. **HanMark 프로젝트 복사**는 `HanMark Journals/`의 원고와 사용자 템플릿을 복사하며 원본을 변경하지 않습니다. 같은 원본을 반복 복사하면 기존 복사본을 엽니다. 이전 Markdown 편집본은 수동 변경을 보존하기 위해 기존 편집 방식을 유지합니다. **기존 편집본을 원문 모드로 복사**에서 차이를 확인한 후 별도 원문 프로젝트를 만들 수 있습니다.
@@ -77,3 +79,11 @@ npm run docs:yaml
 ## License
 
 MIT. HanMark에서 이어받은 코드와 제3자 라이브러리의 고지는 [LICENSE](LICENSE), [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)에 보존합니다.
+
+## 템플릿 ZIP과 배치
+
+공개 기본 프리셋은 Academic Editor Ultra, Journal of Achmage, Journal of Command & Space 세 가지입니다. 릴리즈에 독립 템플릿 ZIP도 제공합니다. **템플릿 라이브러리 → ZIP 가져오기/내보내기**를 사용하세요. HNMR 등 개인 저널은 로컬 라이브러리에서 관리합니다.
+
+표·그림을 선택해 **왼쪽 칼럼 / 오른쪽 칼럼 / 전체 폭**을 고른 다음 위아래로 드래그하세요. 가장자리에서는 자동으로 스크롤하며, 본문 경계 안에서 폭을 유지합니다. 배치 변경은 한 번에 되돌릴 수 있습니다.
+
+메뉴는 Obsidian이 한국어이면 한국어, 나머지 언어이면 English입니다. 원고 내용은 번역하지 않습니다.

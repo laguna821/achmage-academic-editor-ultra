@@ -78,7 +78,7 @@ export class JournalTemplateWizard extends Modal{
         const templates=await this.library.list();if(!row.isConnected)return;
         choose(row,uiText("저장된 템플릿"),"",{"":uiText("템플릿 선택"),...Object.fromEntries(templates.map(t=>[t.id,t.name]))},id=>this.run(async()=>{const t=templates.find(t=>t.id===id);if(!t)return;await copyTemplateAssets(t,this.library.store,this.store);this.template=cloneJournal(t);for(const asset of t.assets)if(!this.draft.assets.some(a=>a.id===asset.id))this.draft.assets.push(cloneJournal(asset));this.previewKey="";this.render();}));
       });
-      action(host,uiText("새 사용자 템플릿"),()=>{this.template=blankTemplate();this.previewKey="";this.render();});
+      action(host,uiText("새 사용자 템플릿"),()=>{this.template=blankTemplate();this.template.name=uiText("내 템플릿");this.previewKey="";this.render();});
       action(host,uiText("현재 템플릿 복제"),()=>{this.template={...cloneJournal(this.template),id:newId("template"),name:(this.template.name+uiText(" 복사")).slice(0,100)};this.render();});
       action(host,uiText("템플릿 가져오기"),()=>this.run(async()=>{const f=await this.gateway.pickFiles({extensions:["zip"],maxFiles:1,maxTotalBytes:40*1024*1024});if(f[0]){this.template=await importTemplate(f[0].bytes,this.store);for(const asset of this.template.assets)if(!this.draft.assets.some(a=>a.id===asset.id))this.draft.assets.push(cloneJournal(asset));this.render();}}));
       const remove=action(host,uiText("저장된 템플릿 삭제"),()=>this.run(async()=>{await this.library.remove(this.template.id);this.template={...this.template,id:newId("template")};this.render();new Notice(uiText("목록에서 삭제했습니다. 기존 원고는 유지됩니다."));}));remove.disabled=this.template.id.startsWith("builtin:");
@@ -89,7 +89,7 @@ export class JournalTemplateWizard extends Modal{
       host.createEl("p",{text:a.kind==="academic"?uiText("학술 발행정보와 논문 말미 정보를 확인합니다. DOI 조회는 버튼을 눌렀을 때만 실행됩니다."):uiText("DOI·접수일·교신저자·학술 선언문을 필수로 요구하지 않습니다. 내용 누락·넘침 검사는 유지됩니다.")});
     }else if(this.step===1){
       for(const [key,label]of [["logo",uiText("주 로고")],["mark",uiText("작은 마크")]] as const){
-        choose(host,label,a[key].mode,key==="logo"?{none:uiText("비우기"),hnmr:uiText("HNMR 기본 로고"),asset:uiText("사용자 이미지")}:{none:uiText("비우기"),crossmark:"Crossmark",asset:uiText("사용자 이미지")},v=>{if(key==="logo")a.logo={mode:v as typeof a.logo.mode};else a.mark={mode:v as typeof a.mark.mode};this.render();});
+        choose(host,label,a[key].mode,key==="logo"?{none:uiText("비우기"),asset:uiText("사용자 이미지")}:{none:uiText("비우기"),crossmark:"Crossmark",asset:uiText("사용자 이미지")},v=>{if(key==="logo")a.logo={mode:v as typeof a.logo.mode};else a.mark={mode:v as typeof a.mark.mode};this.render();});
         if(a[key].mode==="asset"){
           host.createEl("p",{text:this.template.assets.find(f=>f.id===a[key].assetId)?.name??uiText("파일을 선택하세요.")});
           action(host,label+uiText(" 파일 선택"),()=>this.run(()=>this.pickLogo(key)));

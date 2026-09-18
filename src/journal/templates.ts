@@ -2,21 +2,22 @@ import JSZip from "jszip";
 import {SAMPLE_FILES,SAMPLE_LOGO} from './sample.generated';
 import {JOURNAL_BRANDS} from './brands.generated';
 import { appearanceFromPreset,validateAppearance,type JournalAppearance } from "./appearance";
-import { HNMR_PRESET } from "./project";
+import {HNMR_PRESET,createJournalProject} from './project';
 import { resolvedMaster } from "./master";
 import { digestBytes,jsonBytes } from "./storage";
 import {cloneJournal,newId,type BinaryStore,type JournalAsset,type JournalProject} from "./types";
 
 export interface JournalTemplate {format:"hanmark-journal-template";version:1;id:string;name:string;appearance:JournalAppearance;assets:JournalAsset[]}
-export const HNMR_TEMPLATE:JournalTemplate={format:"hanmark-journal-template",version:1,id:"builtin:hnmr",name:"HNMR 기본",appearance:appearanceFromPreset(HNMR_PRESET),assets:[]};
+export const HNMR_TEMPLATE:JournalTemplate={format:"hanmark-journal-template",version:1,id:"builtin:hnmr",name:"Legacy academic template",appearance:appearanceFromPreset(HNMR_PRESET),assets:[]};
 export const GENERAL_TEMPLATE:JournalTemplate={...cloneJournal(HNMR_TEMPLATE),id:"builtin:general",name:"일반 간행물",appearance:{...cloneJournal(HNMR_TEMPLATE.appearance),kind:"general",referenceChecks:false,journalName:"",logo:{mode:"none"},mark:{mode:"none"},publicationText:"{journal}",copyrightText:"",leftHeader:{mode:"title",text:""},rightHeader:{mode:"page",text:""}}};
 export const DEMO_TEMPLATE:JournalTemplate={...cloneJournal(HNMR_TEMPLATE),id:'builtin:aaeu-demo',name:'Academic Editor Ultra',assets:[SAMPLE_LOGO],appearance:{...cloneJournal(HNMR_TEMPLATE.appearance),kind:'general',referenceChecks:true,journalName:'ACADEMIC EDITOR ULTRA',colors:{key:'#174f3b',rule:'#174f3b',abstract:'#eef2ee'},logo:{mode:'asset',assetId:SAMPLE_LOGO.id},mark:{mode:'none'},publicationText:'ACADEMIC EDITOR ULTRA / A WORKING GUIDE',copyrightText:'Academic Editor Ultra — working guide. MIT licensed sample. Not a research publication.',leftHeader:{mode:'journal',text:''},rightHeader:{mode:'page',text:''}}};
 export const BRANDED_TEMPLATES:JournalTemplate[]=JOURNAL_BRANDS.map(brand=>{
   const ach=brand.id==='achmage',name=ach?'Journal of Achmage':'Journal of Command & Space';
   return {...cloneJournal(DEMO_TEMPLATE),id:'builtin:'+brand.id,name,assets:[brand.asset],appearance:{...cloneJournal(DEMO_TEMPLATE.appearance),journalName:name,colors:ach?{key:'#002E6E',rule:'#002E6E',abstract:'#edf2f8'}:{key:'#007F79',rule:'#E985A2',abstract:'#E8F6F4'},logo:{mode:'asset',assetId:brand.asset.id},publicationText:name.toUpperCase()+' / DEMONSTRATION EDITION',copyrightText:name+' · Demonstration journal preset. Sample text and artwork credits accompany the release. Not a published research article.',leftHeader:{mode:'journal',text:''}}};
 });
-const builtins=[HNMR_TEMPLATE,GENERAL_TEMPLATE,DEMO_TEMPLATE,...BRANDED_TEMPLATES];
-const templateBytes=async(store:BinaryStore,path:string):Promise<Uint8Array|null>=>{
+export const PUBLIC_TEMPLATES=[DEMO_TEMPLATE,...BRANDED_TEMPLATES];
+const builtins=PUBLIC_TEMPLATES;
+export const templateBytes=async(store:BinaryStore,path:string):Promise<Uint8Array|null>=>{
   if(path===SAMPLE_LOGO.path)return new TextEncoder().encode(SAMPLE_FILES.assets['aaeu-logo.svg']);
   const brand=JOURNAL_BRANDS.find(b=>b.asset.path===path);
   if(brand)return new Uint8Array(brand.data);
@@ -78,6 +79,21 @@ export class JournalTemplateLibrary{
     await copyTemplateAssets(t,source,this.store);
     await this.update(list=>[...list.filter(x=>x.id!==t.id),t]);return t;
   }
+  async resolve(id:string):Promise<JournalTemplate|undefined>{
+    const list=await this.list(),direct=list.find(t=>t.id===id);if(direct)return direct;
+    const raw=await this.store.get('aliases.json');
+    const aliases:unknown=raw&&raw.length<65536?JSON.parse(new TextDecoder().decode(raw)):{};
+    const target=aliases&&typeof aliases==='object'?(aliases as Record<string,unknown>)[id]:undefined;
+    if(typeof target==='string')return list.find(t=>t.id===target);
+    if(id==='builtin:general')return cloneJournal(GENERAL_TEMPLATE);
+  }
+  async importPackage(bytes:Uint8Array):Promise<JournalTemplate>{
+    const incoming=await importTemplate(bytes,this.store),list=await this.list();
+    const content=(t:JournalTemplate)=>JSON.stringify({appearance:validateAppearance(t.appearance),assets:t.assets,name:t.name});
+    const same=list.find(t=>content(t)===content(incoming));if(same)return same;
+    if(list.some(t=>t.id===incoming.id)||incoming.id.startsWith('builtin:'))incoming.id=newId('template');
+    return this.save(incoming,this.store);
+  }
   remove(id:string):Promise<void>{if(id.startsWith("builtin:"))throw new Error("기본 템플릿은 삭제할 수 없습니다.");return this.update(list=>list.filter(t=>t.id!==id));}
 }
 export async function exportTemplate(input:JournalTemplate,store:BinaryStore):Promise<Uint8Array>{
@@ -92,5 +108,18 @@ export async function importTemplate(bytes:Uint8Array,store:BinaryStore):Promise
   const raw=await meta.async("string");if(raw.length>65536)throw new Error("템플릿 정보가 너무 큽니다.");
   const t=validateTemplate(JSON.parse(raw) as unknown),files:{path:string;bytes:Uint8Array}[]=[];let total=0;
   for(const a of t.assets){const file=zip.file(a.path);if(!file)throw new Error("로고 파일 누락");const bytes=await file.async("uint8array");total+=bytes.length;if(total>40*1024*1024||bytes.length!==a.bytes||await digestBytes(bytes)!==a.sha256)throw new Error("로고 파일 검증 실패");files.push({path:a.path,bytes});}
-  for(const f of files)await store.put(f.path,f.bytes);t.id=newId("template");return t;
+  for(const f of files)await store.put(f.path,f.bytes);return t;
 }
+
+/** Resolve a removed builtin through the user's private library without touching source YAML. */
+export async function restoreLegacyTemplateAssets(p:JournalProject,library:JournalTemplateLibrary,store:BinaryStore):Promise<void>{
+  const m=p.preset.master,a=p.preset.appearance;
+  if(!m||!(a?.logo.mode==='hnmr'||!a&&p.preset.id.startsWith('hnmr')))return;
+  const t=await library.resolve('builtin:hnmr');if(!t)return;
+  await copyTemplateAssets(t,library.store,store);
+  for(const asset of t.assets)if(!p.assets.some(a=>a.id===asset.id))p.assets.push(cloneJournal(asset));
+  if(m.showLogo!==false){m.logoAssetId=t.appearance.logo.assetId;if(a)a.logo=cloneJournal(t.appearance.logo);}
+  if(m.showCrossmark!==false){m.crossmarkAssetId=t.appearance.mark.assetId;if(a)a.mark=cloneJournal(t.appearance.mark);}
+}
+
+export function createPublicJournalProject():JournalProject{const p=createJournalProject();applyTemplate(p,DEMO_TEMPLATE);return p;}

@@ -1,7 +1,8 @@
+import {prepareBrandAssets} from './brandAssets';
 import {preparePdfAssets,pdfMeasurePath,pdfMeasureSvg,placePdfArtwork,type PdfArtworkPlacement} from "./pdfArtwork";
 import {applyArticleOverrides,sidebarItems} from './articleFurniture';
 import {academicChecks,referenceChecks,customHeader,resolveTemplateText} from "./appearance";
-import {reviewTitle,MISSING_CORRESPONDENCE,missingFigureSvg,missingFigureMessage} from './missingContent';
+import {reviewTitle,missingFigureSvg,missingFigureMessage} from './missingContent';
 import { JournalEngine, type EngineFile } from "./engine";
 import { chartSvg } from "./charts";
 import { preferFullTable,measureTableMinimums } from "./tablePolicy";
@@ -48,7 +49,7 @@ export class JournalComposer {
   constructor(private readonly engine:JournalEngine){}
   async compose(projectInput:JournalProject,store:BinaryStore,signal?:AbortSignal,onProgress?:(message:string)=>void,captureEditable=false):Promise<LayoutResult>{
     const reads=new Map<string,Promise<Uint8Array|null>>();
-    const cachedStore:BinaryStore={get(path){let read=reads.get(path);if(!read){read=store.get(path);reads.set(path,read);}return read;},put:(path,bytes)=>store.put(path,bytes)};
+    const cachedStore:BinaryStore={get(path){let read=reads.get(path);if(!read){read=store.get(path);reads.set(path,read);}return read;},put:async(path,bytes)=>{await store.put(path,bytes);reads.set(path,Promise.resolve(bytes));}};
     const prepared=cloneJournal(projectInput),extra=editorialIssues(prepared);
     applyArticleOverrides(prepared);
     if(prepared.editorial?.enabled){extra.push(...bindObjectReferences(prepared),...sortReferenceBlocks(prepared).filter(()=>referenceChecks(prepared)));insertEndMatter(prepared);}
@@ -71,6 +72,7 @@ export class JournalComposer {
   }
   private async composeOnce(projectInput:JournalProject,store:BinaryStore,signal?:AbortSignal,onProgress?:(message:string)=>void,captureEditable=false,pass=0):Promise<LayoutResult>{
     const start=performance.now(),project=cloneJournal(projectInput),p=project.preset;
+    await prepareBrandAssets(project,store);
     const resolved=resolveJournalSpec(p),{master,styles,spacing}=resolved;
     Object.assign(p.body,styles.body);Object.assign(p.table,styles.table);Object.assign(p.references,styles.reference);
     const check=():void=>{if(signal?.aborted)throw new Error("조판이 취소됐습니다.");};
@@ -213,6 +215,11 @@ export class JournalComposer {
       pg.placed.push(box);if(full)pg.full.push(box);return box;
     };
     // Fixed non-text items reserve space before any body text is flowed.
+    for(const override of project.overrides){
+      if(!override.snapLane)continue;
+      override.x=override.snapLane==='right'?left+columnWidth+gutter:left;
+      override.width=override.snapLane==='full'?fullWidth:columnWidth;
+    }
     const pins=new Map(project.overrides.filter(o=>!o.id.startsWith("frame:")&&o.locked).map(o=>[o.id,o]));
     const priorAt=(pg:Page,r:Rect):Placed|undefined=>pg.placed.filter(b=>["paragraph","heading","table","figure"].includes(b.kind)&&b.content&&b.y+b.height<=r.y+.2&&b.x<r.x+r.width-.2&&b.x+b.width>r.x+.2).sort((a,b)=>(b.y+b.height)-(a.y+a.height))[0];
     const bandStart=(pg:Page,r:Rect):number=>Math.max(top,...pg.full.filter(b=>b.y+b.height<=r.y+.1).map(b=>b.y+b.height));
@@ -254,11 +261,11 @@ export class JournalComposer {
         for(const runs of abstractRuns){const len=inlineText(runs).length,a=Math.max(0,from-offset),b=Math.min(len,to-offset);if(b>a)parts.push(textContent(sliceInlines(runs,a,b),project));offset+=len+1;}
         return parts.join("#parbreak()");
       };
-      const abstract=(from:number,to:number,minHeight=0):string=>`[#block(fill:rgb(${literal(p.abstract.fill)}),inset:(left:${master.abstractPadLeftMm}mm,right:${master.abstractPadRightMm}mm,top:${master.abstractPadTopMm}mm,bottom:${master.abstractPadBottomMm}mm),width:100%${minHeight?`,height:${pt(minHeight)}`:""})[#${styled(styles.abstractLabel,from?"Abstract (continued):":"Abstract:")}#v(${pt(master.abstractLabelAfterPt)})#${styled(styles.abstract,fragment(from,to))}${to===abstractText.length?`#v(${pt(master.keywordsBeforePt)})#${styled(styles.keywords,`#text(fill:rgb(${literal(p.keyColor)}),"Keywords: ")#text(${literal(d.keywords.join(", "))})`)}`:""}]]`;
+      const abstract=(from:number,to:number,minHeight=0):string=>`[#block(fill:rgb(${literal(p.abstract.fill)}),inset:(left:${master.abstractPadLeftMm}mm,right:${master.abstractPadRightMm}mm,top:${master.abstractPadTopMm}mm,bottom:${master.abstractPadBottomMm}mm),width:100%${minHeight?`,height:${pt(minHeight)}`:""})[#${styled(styles.abstractLabel,from?"Abstract (continued):":"Abstract:")}#v(${pt(master.abstractLabelAfterPt)})#${styled(styles.abstract,fragment(from,to))}${to===abstractText.length&&d.keywords.length?`#v(${pt(master.keywordsBeforePt)})#${styled(styles.keywords,`#text(fill:rgb(${literal(p.keyColor)}),"Keywords: ")#text(${literal(d.keywords.join(", "))})`)}`:""}]]`;
       const label=(text:string):string=>`#text(font:journal-font(${literal(styles.sidebarLabel.font)}),size:${pt(styles.sidebarLabel.sizePt)},weight:${literal(styles.sidebarLabel.bold?"bold":"regular")},style:${literal(styles.sidebarLabel.italic?"italic":"normal")},fill:rgb(${literal(styles.sidebarLabel.color)}),${literal(text)})`;
       const dates=[["Received: ",d.received],["Revised: ",d.revised],["Accepted: ",d.accepted]].filter(([,v])=>!!v).map(([l,v])=>label(l)+`#text(${literal(v)})`).join("#linebreak()");
-      const correspondence=d.authors.filter(a=>a.corresponding).map(a=>[a.name,a.address||a.affiliations.map(index=>d.affiliations[Number(index)-1]??"").join("\n"),a.email?"Email: "+a.email:""].filter(Boolean).join("\n")).join("\n\n")||(academicChecks(project)?MISSING_CORRESPONDENCE:'');
-      const defaultInfo=`[#v(${pt(master.correspondenceTopPt)})#${styled(styles.sidebar,`${dates?dates+`#v(${pt(master.correspondenceGapPt)})`:""}${academicChecks(project)||correspondence?label("Corresponding author:")+"#linebreak()":""}#text(${literal(correspondence)})`)}]`;
+      const correspondence=d.authors.filter(a=>a.corresponding).map(a=>[a.name,a.address||a.affiliations.map(index=>d.affiliations[Number(index)-1]??"").join("\n"),a.email?"Email: "+a.email:""].filter(Boolean).join("\n")).join("\n\n");
+      const defaultInfo=`[#v(${pt(master.correspondenceTopPt)})#${styled(styles.sidebar,`${dates?dates+`#v(${pt(master.correspondenceGapPt)})`:""}${correspondence?label("Corresponding author:")+"#linebreak()":""}#text(${literal(correspondence)})`)}]`;
       const info=project.document.journalMetadata?`[#v(${pt(master.correspondenceTopPt)})#${styled(styles.sidebar,sidebarItems(project).map((item,i)=>`${i?item.separate?`#v(${pt(master.correspondenceGapPt)})`:"#linebreak()":""}${label(item.label)}${item.separate?"#linebreak()":""}#text(${literal(item.text)})`).join(''))}]`:defaultInfo;
       const infoHeight=await height(info,fullWidth-sidebarX);
       const firstBottom=master.enabled?master.bottomRuleYpt-master.bottomRulePt/2-4:bottom;
@@ -620,6 +627,12 @@ export class JournalComposer {
       const zone=(name:string,text:string,x:number,y:number,width:number,height:number):void=>{boxes.push({id:"publication:"+name,nodeId:"publication:"+name,page:1,kind:"metadata",text,x,y,width,height});};
       zone("issue","발행정보 수정",left,master.publicationYpt,fullWidth-master.logoWidthPt-8,master.topRuleYpt-master.publicationYpt);
       zone("brand","로고·Crossmark 설정",right-master.logoWidthPt-3,Math.min(master.logoYpt,master.crossmarkYpt),master.logoWidthPt+5,master.topRuleYpt-Math.min(master.logoYpt,master.crossmarkYpt));
+      zone("title","제목·저자 수정",left,titleTop,fullWidth,Math.max(24,frontHeight-(titleTop-top)));
+      for(const a of boxes.filter(b=>b.kind==='abstract'))boxes.push({id:'metadata:abstract:'+a.page,nodeId:'abstract',kind:'metadata',page:a.page,x:a.x,y:a.y,width:a.width,height:a.height,text:'초록·키워드 수정'});
+      for(let pg=2;pg<=pageCount;pg++){
+        boxes.push({id:'publication:header:'+pg,nodeId:'publication:header-'+(pg%2?'odd':'even'),kind:'metadata',page:pg,x:left,y:master.runningHeaderYpt,width:fullWidth-35,height:Math.max(14,master.runningRuleYpt-master.runningHeaderYpt),text:'러닝헤드 수정'});
+        boxes.push({id:'publication:folio:'+pg,nodeId:'publication:folio',kind:'metadata',page:pg,x:right-32,y:master.runningHeaderYpt,width:32,height:14,text:'쪽번호 문구 수정'});
+      }
       const side=boxes.find(b=>b.nodeId==="correspondence");if(side)zone("correspondence","날짜·교신저자 수정",side.x,side.y,side.width,side.height);
       zone("copyright","판권·라이선스 수정",left,master.copyrightYpt,fullWidth,bottom-master.copyrightYpt);
     }
@@ -636,6 +649,14 @@ export class JournalComposer {
       }
     }
     const finalPdf=await placePdfArtwork(output.pdf,pdfAssets,artwork);check();
-    return {pdf:finalPdf,boxes,pageCount,issues,coverage,adjustments,elapsedMs:performance.now()-start,fingerprint:await digestBytes(jsonBytes(projectInput)),source,...(captureEditable?{editableSource:{version:2,regions:visiblePages.flatMap(pg=>regions(pg,true).map(r=>({...r,page:pg.number}))),text:visiblePages.flatMap(pg=>pg.placed.filter(b=>!!b.editableText).map(b=>({boxId:b.id,page:b.page,slice:b.editableText!}))),geometry:metadata.filter(v=>["editable-table","editable-image","editable-heading","editable-note"].includes(v.kind??"")).map(v=>({kind:v.kind!,nodeId:v.nodeId!,fragment:v.fragment??0,page:v.page!,x:v.x!,y:v.y!,width:v.width!,height:v.height!})),project,resolved,referenceRuns,headers:runningHeaders,typography:Object.fromEntries(typography.values),tables:boxes.filter(b=>b.kind==="table").map(b=>{const table=project.document.blocks.find(n=>n.id===b.nodeId);return table?.kind==="table"?{nodeId:table.id,page:b.page,fragment:b.fragment??0,columns:tableColumns(table,b.width),padding:tablePadding(table,b.width,p.table.paddingMm*MM)}:null;}).filter((t):t is NonNullable<typeof t>=>!!t)}}:{})};
+    const placementPages=visiblePages.map(pg=>{
+      const reserved=pg.placed.filter(b=>b.kind==='front'||b.kind==='reservation'&&b.nodeId!=='skip');
+      const start=Math.max(top,...reserved.filter(b=>b.nodeId!=='copyright-reserve').map(b=>b.y+b.height));
+      const end=Math.min(bottom,...reserved.filter(b=>b.nodeId==='copyright-reserve').map(b=>b.y));
+      const bounds={x:left,y:start,width:fullWidth,height:Math.max(0,end-start)};
+      const columns=[frame(pg.number,0),frame(pg.number,1)].map(f=>({...f,y:Math.max(f.y,start),height:Math.max(0,Math.min(f.y+f.height,end)-Math.max(f.y,start))})) as [Region,Region];
+      return {page:pg.number,bounds,columns,obstacles:pg.placed.filter(b=>(b.kind==='figure'||b.kind==='table')&&b.locked).map(b=>({nodeId:b.nodeId,x:b.x,y:b.y,width:b.width,height:b.height}))};
+    });
+    return {pdf:finalPdf,boxes,pageCount,placementPages,issues,coverage,adjustments,elapsedMs:performance.now()-start,fingerprint:await digestBytes(jsonBytes(projectInput)),source,...(captureEditable?{editableSource:{version:2,regions:visiblePages.flatMap(pg=>regions(pg,true).map(r=>({...r,page:pg.number}))),text:visiblePages.flatMap(pg=>pg.placed.filter(b=>!!b.editableText).map(b=>({boxId:b.id,page:b.page,slice:b.editableText!}))),geometry:metadata.filter(v=>["editable-table","editable-image","editable-heading","editable-note"].includes(v.kind??"")).map(v=>({kind:v.kind!,nodeId:v.nodeId!,fragment:v.fragment??0,page:v.page!,x:v.x!,y:v.y!,width:v.width!,height:v.height!})),project,resolved,referenceRuns,headers:runningHeaders,typography:Object.fromEntries(typography.values),tables:boxes.filter(b=>b.kind==="table").map(b=>{const table=project.document.blocks.find(n=>n.id===b.nodeId);return table?.kind==="table"?{nodeId:table.id,page:b.page,fragment:b.fragment??0,columns:tableColumns(table,b.width),padding:tablePadding(table,b.width,p.table.paddingMm*MM)}:null;}).filter((t):t is NonNullable<typeof t>=>!!t)}}:{})};
   }
 }

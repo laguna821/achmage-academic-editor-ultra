@@ -70,7 +70,7 @@ test('review export retains missing-figure geometry and caption with an explicit
   assert.equal(s.images.length,1);assert.deepEqual([s.images[0].x,s.images[0].y,s.images[0].width,s.images[0].height],[40,140,480,160]);
   assert.match(new TextDecoder().decode(s.assets[0].bytes),/Figure image required/);
   assert.ok(s.stories.some(st=>editableStoryText(st).includes('Figure 7\nSource chart')));
-  assert.ok(s.stories.some(st=>editableStoryText(st).includes('[Title not supplied]')));
+  assert.ok(s.stories.every(st=>!editableStoryText(st).includes('[Title not supplied]')));
   assert.equal(p.document.title,'');assert.ok(s.issues.some(i=>i.code==='figure-placeholder'&&i.sourceSeverity==='error'&&i.sourceId==='f7'));
   assert.deepEqual(validateEditableLayout(s),[]);
 });

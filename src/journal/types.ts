@@ -100,7 +100,7 @@ export interface JournalPreset {
   headingTransitionsPt?:Record<string,number>;
   fallbackFonts?:string[];
 }
-export interface LayoutOverride { id: Id; page: number; x: number; y: number; width: number; height?: number; locked: boolean; trackingEm?: number; gapAfterPt?: number }
+export interface LayoutOverride { snapLane?:import('./placement').PlacementLane; id: Id; page: number; x: number; y: number; width: number; height?: number; locked: boolean; trackingEm?: number; gapAfterPt?: number }
 export interface CoverageEntry {key:string;nodeId:Id;kind:string;status:"rendered"|"transformed"|"excluded"|"unresolved";expected:number;actual:number;pages:number[];reason?:string}
 export interface CompositionAudit {entries:CoverageEntry[];complete:boolean;issues:JournalIssue[]}
 export interface CompositionAdjustment {nodeId:Id;rule:string;before:number|string;after:number|string;reason:string}
@@ -118,7 +118,7 @@ export interface JournalProject {
   editorial?:{enabled:boolean;numbering:"source"|"layout";sortReferences:boolean;preserveCharts:boolean;changes:EditorialChange[];detections:CaptionDetection[];markdownBaseline?:{sourceId:Id;document:ArticleDocument;references:ReferenceRecord[]}};
 }
 export interface LayoutBox { id: Id; nodeId: Id; page: number; x: number; y: number; width: number; height: number; kind: string; text?: string; fragment?: number; rowIds?: Id[]; cellIds?: Id[]; locked?: boolean; contentY?:number;contentHeight?:number;clearanceBeforePt?:number;clearanceAfterPt?:number;noteKind?:string;noteSources?:{id:Id;start:number;end:number}[];noteLeadingPt?:number;noteSizePt?:number;noteGapPt?:number }
-export interface LayoutResult { editableSource?:import("./editableExport").JournalEditableSource; pdf: Uint8Array; boxes: LayoutBox[]; pageCount: number; issues: JournalIssue[]; elapsedMs: number; fingerprint: string; source: string; coverage?:CompositionAudit;adjustments?:CompositionAdjustment[];numbering?:NumberAssignment[] }
+export interface LayoutResult { placementPages?:import('./placement').PlacementPage[]; editableSource?:import("./editableExport").JournalEditableSource; pdf: Uint8Array; boxes: LayoutBox[]; pageCount: number; issues: JournalIssue[]; elapsedMs: number; fingerprint: string; source: string; coverage?:CompositionAudit;adjustments?:CompositionAdjustment[];numbering?:NumberAssignment[] }
 export interface BinaryStore { get(path: string): Promise<Uint8Array | null>; put(path: string, bytes: Uint8Array): Promise<void> }
 export interface MarkdownDependency {src:string;kind:'remote'|'local'|'data';path:string;sha256:string;mime?:string;name:string;checkedAt:string;localPath?:string}
 

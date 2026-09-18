@@ -30,3 +30,5 @@ scripts/__pycache__/
 
 src/journal/sample.generated.ts
 src/journal/brands.generated.ts
+
+src/journal/brand.generated.ts

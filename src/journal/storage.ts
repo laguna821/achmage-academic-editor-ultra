@@ -1,3 +1,4 @@
+import {prepareBrandAssets} from './brandAssets';
 import JSZip from "jszip";
 import type { DataAdapter } from "obsidian";
 import { safeProjectPath, validateProject } from "./project";
@@ -100,6 +101,7 @@ export class JournalStore implements BinaryStore {
 }
 
 export async function exportJournalArchive(project: JournalProject, store: BinaryStore): Promise<Uint8Array> {
+  await prepareBrandAssets(project,store);
   const zip = new JSZip();
   zip.file("journal.json", JSON.stringify(validateProject(project), null, 2));
   const paths = new Set([...project.sources, ...project.assets, ...project.fonts,...project.markdown?.dependencies??[]].map(a => a.path));

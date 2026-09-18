@@ -1,13 +1,23 @@
+import {localizedProperty} from './propertyLanguage';
 import {cloneJournal,inlineText,newId,type JournalProject,type Paragraph,type EndMatter,type JournalIssue} from './types';
 import {endMatterLabels} from './editorial';
 import {TEXT_TOKENS} from './appearance';
 
+export type PropertyGroup='basic'|'authors'|'abstract'|'publication'|'statements'|'furniture';
 type Kind='text'|'long'|'boolean'|'integer'|'list'|'mode';
-export interface PropertySpec {key:string;label:string;kind:Kind;default:string|number|boolean|string[];target:string}
-const spec=(key:string,label:string,kind:Kind='text',value:PropertySpec['default']='',target=key):PropertySpec=>({key:'aaeu-'+key,label,kind,default:value,target});
+export interface PropertySpec {key:string;label:string;kind:Kind;default:string|number|boolean|string[];target:string;group:PropertyGroup;description:string;example:string;location:string;requirement:'required'|'recommended'|'optional'}
+function guide(key:string,label:string):Pick<PropertySpec,'group'|'description'|'example'|'location'|'requirement'>{
+  const group:PropertyGroup=/^(author-|affiliation-)/.test(key)?'authors':/^(abstract|keywords)$/.test(key)?'abstract':/^(data|funding|conflict|acknowledgments|ethics|contributions|statement-)/.test(key)?'statements':/^(received|revised|accepted|corresponding-|sidebar-|year$|volume$|issue$|doi$|first-page$|publication-mode|copyright-year)/.test(key)?'publication':/^(running-|publication-|copyright-|header-|folio-)/.test(key)?'furniture':'basic';
+  const location=group==='statements'?'참고문헌 직전':group==='furniture'?(key.startsWith('copyright')?'첫 페이지 하단':key.startsWith('publication')?'첫 페이지 왼쪽 상단':'두 번째 페이지부터 머리말·쪽번호'):group==='publication'?(/^(corresponding|sidebar|received|revised|accepted)/.test(key)?'첫 페이지 초록 오른쪽':'첫 페이지 발행정보'):group==='abstract'?'첫 페이지 초록 영역':'첫 페이지 제목·저자 영역';
+  const examples:Record<string,string>={title:'AI와 함께 생각하기',abstract:'연구 목적, 방법, 결과를 여러 문단으로 입력할 수 있습니다.',keywords:'AI, 학습, 글쓰기',doi:'10.1234/example.2026.001',received:'September 1, 2026',revised:'September 10, 2026',accepted:'September 18, 2026','corresponding-name':'Min Kim','corresponding-email':'editor@example.org','corresponding-address':'Department, University, City, Country','running-title':'AI and Learning','running-authors':'Kim et al.','header-even-text':'{journal} {year}','folio-text':'{page}'};
+  const requirement=key==='title'||/^(abstract|doi|year|received|revised|accepted|corresponding-name|corresponding-email|data-text|funding-text|conflict-text)$/.test(key)?'required':/^(keywords|author-\{n\}-name|affiliation-\{n\}-text|running-title)$/.test(key)?'recommended':'optional';
+  const description=key.endsWith('-hide')?'켜면 해당 정보와 표제를 출력하지 않습니다. 입력한 값은 보존됩니다.':key.endsWith('-omission-reason')?'저널에서 요구하는 항목을 생략한 이유를 기록합니다. 출력 본문에는 들어가지 않습니다.':/^(publication|copyright|header-even|header-odd|folio)-text$/.test(key)?'비우면 템플릿 문구를 사용합니다. 직접 입력한 문구는 템플릿을 바꿔도 유지됩니다. {year}, {page} 등의 변수를 사용할 수 있습니다.':key==='abstract'?'길이에 맞춰 초록 상자의 높이가 자동 조정됩니다. 빈 줄로 문단을 나눌 수 있습니다.':group==='statements'?'실제 원고에 맞는 내용을 입력하세요. 자동으로 사실을 가정하거나 선언문을 채우지 않습니다.':key.includes('affiliations')?'이 저자가 속한 소속의 번호를 입력합니다. 소속 추가 후 해당 번호를 선택하세요.':`${label}에 사용할 실제 정보를 입력하세요. 글꼴·색·배치는 선택한 저널 템플릿이 적용합니다.`;
+  return {group,location,description,example:examples[key]??(key.includes('email')?'name@example.org':key.includes('year')?'2026':''),requirement};
+}
+const spec=(key:string,label:string,kind:Kind='text',value:PropertySpec['default']='',target=key):PropertySpec=>({key:'aaeu-'+key,label,kind,default:value,target,...guide(key,label)});
 /** One registry supplies templates, validation and documentation, including indexed fields. */
 export const MARKDOWN_PROPERTIES:readonly PropertySpec[]=[
-  spec('schema','속성 형식 버전','integer',1),spec('template','저널 템플릿 ID','text','builtin:hnmr'),
+  spec('schema','속성 형식 버전','integer',1),spec('template','저널 템플릿 ID','text','builtin:aaeu-demo'),
   ...[['title','논문 제목'],['running-title','머리말 축약 제목'],['running-authors','머리말 저자'],['doi','DOI'],['year','발행 연도'],['volume','권'],['issue','호'],['received','접수일'],['revised','수정일'],['accepted','승인일'],['copyright-year','판권 연도']].map(([k,l])=>spec(k,l)),
   spec('first-page','시작 페이지','integer',1),spec('publication-mode','발행 상태','mode','aop'),spec('abstract','초록','long'),spec('keywords','키워드','list',[]),
   spec('reference-checks','참고문헌 검사','boolean',true),
@@ -23,10 +33,10 @@ export const MARKDOWN_PROPERTIES:readonly PropertySpec[]=[
 ];
 const matcher=(s:PropertySpec)=>new RegExp('^'+s.key.replace('{n}','([1-9][0-9]{0,2})')+'$');
 export const propertySpec=(key:string):PropertySpec|undefined=>MARKDOWN_PROPERTIES.find(s=>matcher(s).test(key));
-export function propertyTemplate(templateId='builtin:hnmr'):string{
-  return MARKDOWN_PROPERTIES.map(s=>{const key=s.key.replace('{n}','1'),value=s.key==='aaeu-template'?templateId:s.key==='aaeu-reference-checks'&&templateId==='builtin:general'?false:s.default;return `# ${s.label.split('{n}').join('1')}\n${key}: ${s.kind==='long'?'|\n  ':JSON.stringify(value)}`;}).join('\n');
+export function propertyTemplate(templateId='builtin:aaeu-demo',language='en'):string{
+  return MARKDOWN_PROPERTIES.map(raw=>{const s=localizedProperty(raw,language);const key=s.key.replace('{n}','1'),value=s.key==='aaeu-template'?templateId:s.key==='aaeu-reference-checks'&&templateId==='builtin:general'?false:s.default;return `# ${s.label.split('{n}').join('1')}\n${key}: ${s.kind==='long'?'|\n  ':JSON.stringify(value)}`;}).join('\n');
 }
-export const manuscriptTemplate=(templateId='builtin:hnmr'):string=>`---\n${propertyTemplate(templateId)}\n---\n\n## Introduction\n\n\n## Methods\n\n### Study design\n\n\n## Results\n\n\n## Discussion\n\n\n## References\n\n`;
+export const manuscriptTemplate=(templateId='builtin:aaeu-demo',language='en'):string=>`---\n${propertyTemplate(templateId,language)}\n---\n\n## Introduction\n\n\n## Methods\n\n### Study design\n\n\n## Results\n\n\n## Discussion\n\n\n## References\n\n`;
 export function validateMarkdownProperties(m:Record<string,unknown>):JournalIssue[]{
   const issues:JournalIssue[]=[];
   const error=(key:string,message:string)=>issues.push({id:'property:'+key,code:'markdown-property',severity:'error',nodeId:'property:'+key,message:key+': '+message});

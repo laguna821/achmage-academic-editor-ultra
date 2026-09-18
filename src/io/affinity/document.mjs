@@ -170,11 +170,11 @@ export function createSnapshotDocument(s,resources,fonts,{dpi=300,pageLayout='si
     for(const layer of ['background','furniture','body','artwork']){
       const children=[],grouped=new Map();for(const item of items.filter(i=>i.layer===layer)){if(!item.group)children.push(item.obj);else{if(!grouped.has(item.group))grouped.set(item.group,[]);grouped.get(item.group).push(item.obj);}}
       for(const [name,objects]of grouped)children.push(object(['Grup','Node'],[...node(name),refs('Chld',objects)]));
-      if(children.length)groups.push(object(['Grup','Node'],[...node('HanMark '+layer),refs('Chld',children)]));
+      if(children.length)groups.push(object(['Grup','Node'],[...node('Academic Editor Ultra '+layer),refs('Chld',children)]));
     }
     return object(['Sprd','Node'],[...node('Pages '+indices.map(i=>i+s.firstPage).join('–')),refs('Chld',groups),ref('SpMd',pageMeta(indices.length)),int('fspo',0),int('npct',indices.length),bool('RfPg',true),bool('SprT',false),ref('BgrC',color('#ffffff'))]);
   });
-  const version=object(['ApVs'],[int('Majr',3),int('Minr',2),int('Bild',3),int('Revn',4646),text('Prod','HanMark snapshot native-authoring research'),text('Plat','Win32')]);
+  const version=object(['ApVs'],[int('Majr',3),int('Minr',2),int('Bild',3),int('Revn',4646),text('Prod','Academic Editor Ultra native export'),text('Plat','Win32')]);
   const doc=object(['DocN','LogN','Node'],[...node(s.title),refs('Chld',spreads),refs('MpCh',masters.pages),field('DfSz',36,[s.pageWidth*(facing?2:1),s.pageHeight]),ref('spmd',pageMeta()),refs('DSec',[object(['DocS'],[field('StId',3,0),int('NbFr',s.firstPage),bool('InEx',true)])])]);
   const bytes=r.document([ref('OVer',version),ref('NVer',version),ref('DocR',doc),ref('EdRt',spreads[0]),ref('CLyr',spreads[0]),ref('UVCn',object(['UVCn'],[real('UPPI',dpi),real('VDPI',-1)])),field('UntT',1,7)]);
   return {bytes,assets,report:{...report,pages:s.pageCount,pageLayout,spreads:spreadPages.map((indices,i)=>({nativeId:spreads[i].id,pages:indices.map(n=>n+1)})),dpi,sourceFingerprint:s.fingerprint,objects:r.objects.length,seedDocument:false,applicationUsedToGenerate:false,nativeAcceptance:'pending'}};

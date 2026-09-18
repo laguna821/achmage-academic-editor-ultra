@@ -1,7 +1,7 @@
 name: Verify independent journal plugin
 on:
   push:
-    branches: ["0.1.0", "0.1.1", "main"]
+    branches: ["0.1.0", "0.1.1", "0.2.0", "1.0.0", "main"]
   pull_request:
 permissions:
   contents: read

@@ -1,148 +1,148 @@
 ---
-# 속성 형식 버전
+# Property schema version
 aaeu-schema: 1
-# 저널 템플릿 ID
-aaeu-template: "builtin:hnmr"
-# 논문 제목
+# Journal template
+aaeu-template: "builtin:aaeu-demo"
+# Article title
 aaeu-title: ""
-# 머리말 축약 제목
+# Short running title
 aaeu-running-title: ""
-# 머리말 저자
+# Running authors
 aaeu-running-authors: ""
 # DOI
 aaeu-doi: ""
-# 발행 연도
+# Publication year
 aaeu-year: ""
-# 권
+# Volume
 aaeu-volume: ""
-# 호
+# Issue
 aaeu-issue: ""
-# 접수일
+# Received
 aaeu-received: ""
-# 수정일
+# Revised
 aaeu-revised: ""
-# 승인일
+# Accepted
 aaeu-accepted: ""
-# 판권 연도
+# Copyright year
 aaeu-copyright-year: ""
-# 시작 페이지
+# First page
 aaeu-first-page: 1
-# 발행 상태
+# Publication status
 aaeu-publication-mode: "aop"
-# 초록
+# Abstract
 aaeu-abstract: |
   
-# 키워드
+# Keywords
 aaeu-keywords: []
-# 참고문헌 검사
+# Reference checks
 aaeu-reference-checks: true
-# publication 문구 (빈 값: 템플릿 상속)
+# Publication information — text
 aaeu-publication-text: ""
-# publication 의도적으로 숨김
+# Publication information — hide
 aaeu-publication-hide: false
-# copyright 문구 (빈 값: 템플릿 상속)
+# Copyright — text
 aaeu-copyright-text: |
   
-# copyright 의도적으로 숨김
+# Copyright — hide
 aaeu-copyright-hide: false
-# header-even 문구 (빈 값: 템플릿 상속)
+# Even-page running head — text
 aaeu-header-even-text: ""
-# header-even 의도적으로 숨김
+# Even-page running head — hide
 aaeu-header-even-hide: false
-# header-odd 문구 (빈 값: 템플릿 상속)
+# Odd-page running head — text
 aaeu-header-odd-text: ""
-# header-odd 의도적으로 숨김
+# Odd-page running head — hide
 aaeu-header-odd-hide: false
-# folio 문구 (빈 값: 템플릿 상속)
+# Page number — text
 aaeu-folio-text: ""
-# folio 의도적으로 숨김
+# Page number — hide
 aaeu-folio-hide: false
-# 오른쪽 정보 순서
+# Sidebar order
 aaeu-sidebar-order: ["received","revised","accepted","correspondence","custom"]
-# received 숨김
+# Hide received
 aaeu-sidebar-received-hide: false
-# revised 숨김
+# Hide revised
 aaeu-sidebar-revised-hide: false
-# accepted 숨김
+# Hide accepted
 aaeu-sidebar-accepted-hide: false
-# correspondence 숨김
+# Hide correspondence
 aaeu-sidebar-correspondence-hide: false
-# 저자 1 name
+# Author 1 — name
 aaeu-author-1-name: ""
-# 저자 1 affiliations
+# Author 1 — affiliation numbers
 aaeu-author-1-affiliations: []
-# 저자 1 email
+# Author 1 — email
 aaeu-author-1-email: ""
-# 저자 1 address
+# Author 1 — address
 aaeu-author-1-address: |
   
-# 저자 1 교신저자
+# Author 1 — corresponding author
 aaeu-author-1-corresponding: false
-# 소속 1
+# Affiliation 1 — text
 aaeu-affiliation-1-text: |
   
-# 별도 교신저자 name
+# Corresponding author name
 aaeu-corresponding-name: ""
-# 별도 교신저자 email
+# Corresponding author email
 aaeu-corresponding-email: ""
-# 별도 교신저자 address
+# Corresponding author affiliation and address
 aaeu-corresponding-address: |
   
-# 사용자 정보 1 표제
+# Custom information 1 — label
 aaeu-sidebar-1-label: ""
-# 사용자 정보 1 내용
+# Custom information 1 — text
 aaeu-sidebar-1-text: |
   
-# 사용자 정보 1 숨김
+# Custom information 1 — hide
 aaeu-sidebar-1-hide: false
-# Data availability statement
+# Data availability statement — text
 aaeu-data-text: |
   
-# Data availability statement 숨김
+# Data availability statement — hide
 aaeu-data-hide: false
-# Data availability statement 제외 사유 (필수 항목을 숨길 때)
+# Data availability statement — reason for omission
 aaeu-data-omission-reason: ""
-# Funding Information
+# Funding information — text
 aaeu-funding-text: |
   
-# Funding Information 숨김
+# Funding information — hide
 aaeu-funding-hide: false
-# Funding Information 제외 사유 (필수 항목을 숨길 때)
+# Funding information — reason for omission
 aaeu-funding-omission-reason: ""
-# Conflict of Interest
+# Conflict of interest — text
 aaeu-conflict-text: |
   
-# Conflict of Interest 숨김
+# Conflict of interest — hide
 aaeu-conflict-hide: false
-# Conflict of Interest 제외 사유 (필수 항목을 숨길 때)
+# Conflict of interest — reason for omission
 aaeu-conflict-omission-reason: ""
-# Acknowledgments
+# Acknowledgments — text
 aaeu-acknowledgments-text: |
   
-# Acknowledgments 숨김
+# Acknowledgments — hide
 aaeu-acknowledgments-hide: false
-# Acknowledgments 제외 사유 (필수 항목을 숨길 때)
+# Acknowledgments — reason for omission
 aaeu-acknowledgments-omission-reason: ""
-# Ethics statement
+# Ethics statement — text
 aaeu-ethics-text: |
   
-# Ethics statement 숨김
+# Ethics statement — hide
 aaeu-ethics-hide: false
-# Ethics statement 제외 사유 (필수 항목을 숨길 때)
+# Ethics statement — reason for omission
 aaeu-ethics-omission-reason: ""
-# Author Contributions
+# Author contributions — text
 aaeu-contributions-text: |
   
-# Author Contributions 숨김
+# Author contributions — hide
 aaeu-contributions-hide: false
-# Author Contributions 제외 사유 (필수 항목을 숨길 때)
+# Author contributions — reason for omission
 aaeu-contributions-omission-reason: ""
-# 추가 말미 정보 1 제목
+# Additional statement 1 — title
 aaeu-statement-1-title: ""
-# 추가 말미 정보 1 내용
+# Additional statement 1 — text
 aaeu-statement-1-text: |
   
-# 추가 말미 정보 1 숨김
+# Additional statement 1 — hide
 aaeu-statement-1-hide: false
 ---
 

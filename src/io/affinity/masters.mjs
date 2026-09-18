@@ -8,7 +8,7 @@ export function nativeMasters({object,node,pageMeta,pageItems,report,hash,facing
   const pages=[],instances=new Map(),sets=new Map();report.masters=[];
   for(const [i,items]of pageItems.entries())for(const item of items.filter(i=>i.master)){
     const m=item.master,id=facing?'hanmark:facing':m.id,key=facing?`${i%2}:${m.id}:${m.item}`:m.item;
-    if(!sets.has(id))sets.set(id,{name:facing?'HanMark · Facing pages':m.name,items:new Map(),pages:new Set()});
+    if(!sets.has(id))sets.set(id,{name:facing?'Academic Editor Ultra · Facing pages':m.name,items:new Map(),pages:new Set()});
     const set=sets.get(id);set.pages.add(i+1);
     if(!set.items.has(key))set.items.set(key,[]);
     set.items.get(key).push({obj:item.obj,page:i+1});

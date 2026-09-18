@@ -65,10 +65,10 @@ test("library templates are snapshots, builtins immutable, exchange excludes fon
   const source=memory(),library=new JournalTemplateLibrary(memory()),t=blankTemplate();t.name="Mine";
   const saved=await library.save(t,source),p=createJournalProject();applyTemplate(p,saved);
   t.appearance.journalName="Changed";await library.save(t,source);assert.equal(p.preset.appearance!.journalName,"");
-  assert.equal((await library.list()).length,6);await library.remove(saved.id);assert.equal((await library.list()).length,5);
+  assert.equal((await library.list()).length,4);await library.remove(saved.id);assert.equal((await library.list()).length,3);
   assert.throws(()=>library.remove(HNMR_TEMPLATE.id));
   const zip=await exportTemplate(t,source),imported=await importTemplate(zip,memory());
-  assert.deepEqual(cloneJournal(imported.appearance),cloneJournal(t.appearance));assert.notEqual(imported.id,t.id);assert.deepEqual(imported.assets,[]);
+  assert.deepEqual(cloneJournal(imported.appearance),cloneJournal(t.appearance));assert.equal(imported.id,t.id);assert.deepEqual(imported.assets,[]);
 });
 test("logo exchange checks hashes and rejects path traversal",async()=>{
   const source=memory(),bytes=new Uint8Array([1,2,3]),sha256=await digestBytes(bytes),t=blankTemplate();
