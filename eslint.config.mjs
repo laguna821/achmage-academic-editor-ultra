@@ -11,6 +11,9 @@ export default defineConfig([
       "node_modules/**",
       "release/**",
       "src/io/embeddedAssets.ts",
+      // TypeScript excludes these fallback declarations once the generated
+      // implementation exists. Imports still use them in source-only scans.
+      "src/journal/*.generated.d.ts",
       "src/journal/embedded.generated.ts"
     ]
   },
