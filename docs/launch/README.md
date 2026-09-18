@@ -1,3 +1,5 @@
+> Current release: [1.0.0](release-1.0.0.md). Gallery images were refreshed for 1.0.0; the original launch videos remain a 0.1.1 demonstration.
+
 # Launch media · 0.1.1
 
 ## Message

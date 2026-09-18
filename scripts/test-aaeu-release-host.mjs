@@ -183,4 +183,3 @@ try {
   if(browser){try{const cdp=await browser.newBrowserCDPSession();await Promise.race([cdp.send('Browser.close'),new Promise(r=>setTimeout(r,1000))]);}catch{}}
   if(!child.killed)child.kill();
 }
-
