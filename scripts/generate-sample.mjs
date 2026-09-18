@@ -1,8 +1,9 @@
 import fs from 'node:fs/promises';
 import {createHash} from 'node:crypto';
 const base='examples/welcome',assets={};
-for(const name of (await fs.readdir(base+'/assets')).sort())assets[name]=await fs.readFile(base+'/assets/'+name,'utf8');
-const samples={en:await fs.readFile(base+'/en.md','utf8'),ko:await fs.readFile(base+'/ko.md','utf8'),assets};
+const readText=async file=>(await fs.readFile(file,'utf8')).replace(/\r\n/g,'\n');
+for(const name of (await fs.readdir(base+'/assets')).sort())assets[name]=await readText(base+'/assets/'+name);
+const samples={en:await readText(base+'/en.md'),ko:await readText(base+'/ko.md'),assets};
 const size=Buffer.byteLength(JSON.stringify(samples));
 if(size>500000)throw Error('Bundled welcome sample exceeds 500 KB');
 const logo=assets['aaeu-logo.svg'],hash=createHash('sha256').update(logo).digest('hex');

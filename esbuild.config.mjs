@@ -8,8 +8,8 @@ import { JOURNAL_EDITOR_BOUNDARY, journalEditorBoundaryPlugin, withoutJournalEdi
 
 const prod = process.argv[2] === "production";
 const outputFile = process.env.HANMARK_BUILD_OUTPUT ?? "main.js";
-const journalOcrLicense = readFileSync('assets/journal/ocr/LICENSE','utf8');
-const journalEditorLicenses = readFileSync('assets/journal/editor-licenses.txt','utf8');
+const journalOcrLicense = readFileSync('assets/journal/ocr/LICENSE','utf8').replace(/\r\n/g,'\n');
+const journalEditorLicenses = readFileSync('assets/journal/editor-licenses.txt','utf8').replace(/\r\n/g,'\n');
 
 const external = [
   "obsidian",
