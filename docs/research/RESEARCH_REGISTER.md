@@ -154,6 +154,7 @@ R-039: [Vector artwork, native masters and frame capacity](R-039-vector-artwork-
 
 R-040: [Facing spreads and a paired native master](R-040-facing-spreads-and-paired-master.md). Journal AF defaults to paired pages and one two-page master; single-page option, original numbering, continuous body flow and repeat native save/reopen checks.
 
-Next document: R-041. Current development branch: 3.2.0 (in progress); preserved development baseline 3.0.2; published baseline remains 2.6.1 a31a191d21cbb21e45d6ce76bdf187ca5b2502ff.
+The journal editor is now developed independently as Achmage Academic Editor Ultra. HanMark's published 2.6.1 baseline remains separate.
 
 - [R-041 — 독립 플러그인과 Markdown 원문 워크플로우](R-041-independent-markdown-editor.md)
+- [R-042 — Working guide and launch package · 0.1.1](R-042-launch-package.md)

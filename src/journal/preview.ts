@@ -14,14 +14,27 @@ export class JournalPreview{
     this.clear();const generation=this.generation;
     const pdf=await getDocument({data:result.pdf.slice(),isEvalSupported:false,useSystemFonts:false,disableFontFace:false}).promise;
     if(generation!==this.generation){await pdf.destroy();return;}this.pdf=pdf;
-    const draw=async(holder:HTMLElement,pageNumber:number):Promise<void>=>{
-      if(holder.dataset.rendered)return;holder.dataset.rendered="true";
-      const pg=await pdf.getPage(pageNumber);if(generation!==this.generation)return;
-      const viewport=pg.getViewport({scale:1.3}),canvas=holder.querySelector("canvas")!;
-      canvas.width=Math.ceil(viewport.width);canvas.height=Math.ceil(viewport.height);
-      const context=canvas.getContext("2d");if(context)await pg.render({canvasContext:context,viewport}).promise;
+    const queues=new Map<HTMLElement,Promise<void>>(),visible=new Set<HTMLElement>();
+    const draw=(holder:HTMLElement):void=>{
+      const task=(queues.get(holder)??Promise.resolve()).catch(()=>undefined).then(async()=>{
+        if(generation!==this.generation||!holder.isConnected)return;
+        const pg=await pdf.getPage(Number(holder.dataset.page));if(generation!==this.generation)return;
+        const base=pg.getViewport({scale:1});
+        // Match actual screen pixels, including expanded proof and high-DPI displays.
+        // Bound the page bitmap and keep rendering lazy for long manuscripts.
+        const scale=Math.min(3,Math.max(1,holder.getBoundingClientRect().width*(window.devicePixelRatio||1)/base.width));
+        const viewport=pg.getViewport({scale}),canvas=holder.querySelector("canvas")!,width=Math.ceil(viewport.width);
+        if(holder.dataset.renderWidth===String(width))return;
+        canvas.width=width;canvas.height=Math.ceil(viewport.height);
+        const context=canvas.getContext("2d");if(!context)return;
+        const render=pg.render({canvasContext:context,viewport});
+        const cancel=():void=>render.cancel();this.cleanups.push(cancel);
+        try{await render.promise;if(generation===this.generation)holder.dataset.renderWidth=String(width);}
+        finally{const i=this.cleanups.indexOf(cancel);if(i>=0)this.cleanups.splice(i,1);}
+      });queues.set(holder,task);void task.catch(()=>undefined);
     };
-    this.observer=new IntersectionObserver(entries=>{for(const e of entries)if(e.isIntersecting){this.observer?.unobserve(e.target);void draw(e.target as HTMLElement,Number((e.target as HTMLElement).dataset.page)).catch(()=>undefined);}},{root:this.host,rootMargin:"500px"});
+    this.observer=new IntersectionObserver(entries=>{for(const e of entries){const holder=e.target as HTMLElement;if(e.isIntersecting){visible.add(holder);draw(holder);}else visible.delete(holder);}},{root:this.host,rootMargin:"500px"});
+    const resize=new ResizeObserver(()=>{for(const holder of visible)draw(holder);});resize.observe(this.host);this.cleanups.push(()=>resize.disconnect());
     for(let n=1;n<=pdf.numPages;n++){
       const pg=await pdf.getPage(n);if(generation!==this.generation)return;
       const viewport=pg.getViewport({scale:1}),holder=this.host.createDiv();

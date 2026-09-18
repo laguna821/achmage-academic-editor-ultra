@@ -1,53 +1,72 @@
 # Achmage Academic Editor Ultra
 
-Obsidian에서 Markdown 또는 저자의 Word 원고를 저널 형태로 조판하는 독립 플러그인입니다. HanMark의 검증된 조판 코드를 기반으로 분리한 **0.1.0 개발판**입니다. HanMark를 설치하지 않아도 동작하며, 두 플러그인을 함께 사용할 수 있습니다.
+### Your words. A journal.
 
-## 시작
+Write in Markdown. Compose a journal. Keep the last edit yours.
 
-1. 리본의 **Academic Editor Ultra** 또는 명령 팔레트의 **저널 편집 열기**를 실행합니다.
-2. **새 Markdown 원고**에서 저널 템플릿을 선택합니다. 전체 `aaeu-*` YAML 속성과 본문 골격이 생성됩니다.
-3. Markdown에서 속성과 본문을 작성하고 **조판**을 누릅니다. PDF 미리보기, 검사 결과, PDF·IDML·AF 내보내기가 같은 프로젝트에 있습니다.
+![One Markdown manuscript, two custom journals](docs/media/en-01.png)
 
-기존 노트는 **현재 Markdown 원문으로 저널 시작**으로 연결합니다. 원래 YAML과 본문을 자동 수정하지 않습니다. 속성 안내에서 필요한 항목을 복사할 수 있습니다. 기존 `title`, `abstract`, `keywords`, `runningTitle` 등의 입력도 지원합니다.
+[한국어](README.ko.md) · [Download 0.1.1](https://github.com/laguna821/achmage-academic-editor-ultra/releases/tag/0.1.1) · [Working samples](https://github.com/laguna821/achmage-academic-editor-ultra/releases/download/0.1.1/aaeu-working-samples-0.1.1.zip) · [90-second demo](docs/launch/videos.md)
 
-## 두 가지 입력 경로
+An Obsidian plugin for researchers and editors who want a carefully composed paper without rebuilding every page by hand. Start with a Markdown note or an author's Word manuscript. Create a PDF, then export an editable Affinity document when the final adjustment belongs in a design application.
 
-- **Markdown 원문 모드:** 내용은 Markdown에만 작성합니다. 저널 화면은 원문 위치 이동, 검사, 템플릿·배치 조정과 출력에 사용합니다. 원문 수정·이름 변경·로컬 이미지 변경을 추적하며 출력 전에 다시 확인합니다.
-- **Word 편집본:** 저자가 보낸 DOCX를 가져와 기존 본문 편집기에서 정리·검토합니다. 기존 저널 편집 기능을 유지합니다.
+## The guide is a manuscript you can try
 
-프로젝트는 `Academic Editor Ultra/`에 저장합니다. **HanMark 프로젝트 복사**는 `HanMark Journals/`의 원고와 사용자 템플릿을 복사하며 원본을 변경하지 않습니다. 같은 원본을 반복 복사하면 기존 복사본을 엽니다. 이전 Markdown 편집본은 수동 변경을 보존하기 위해 기존 편집 방식을 유지합니다. **기존 편집본을 원문 모드로 복사**에서 차이를 확인한 후 별도 원문 프로젝트를 만들 수 있습니다.
+Choose **Open sample manuscript**. Its working guide has an abstract, correspondence, figures, tables, notes and closing statements. Change its title in Markdown and choose **Compose**. The page follows your words.
 
-## Markdown 규칙
+English and Korean samples are included offline. Opening the guide again preserves your edits; **Create a fresh copy** starts another experiment.
 
-제목은 `aaeu-title`, 본문 절은 `##`, 하위 절은 `###`–`######`를 사용합니다. 기존 `# 제목`도 지원합니다. 표준 표·목록·인용·강조·링크 및 로컬 이미지, Obsidian 이미지 임베드, HTTPS 이미지 URL을 읽습니다. CMDS Eagle의 R2 이미지 링크도 표준 Markdown 이미지로 처리합니다.
+[English manuscript](examples/welcome/en.md) · [한국어 원고](examples/welcome/ko.md) · [Navy PDF](https://github.com/laguna821/achmage-academic-editor-ultra/releases/download/0.1.1/achmage-en.pdf) · [Command & Space PDF](https://github.com/laguna821/achmage-academic-editor-ultra/releases/download/0.1.1/command-space-en.pdf) · [Editable AF example](https://github.com/laguna821/achmage-academic-editor-ultra/releases/download/0.1.1/command-space-en.af.zip)
 
-그림과 표의 명시적 인접 캡션을 우선 사용하며, 그림의 alt는 대체 캡션입니다. 캡션을 새로 만들어 내지 않습니다. 이미지 안 글자·불명확한 연결은 기존 검토 기능으로 확인합니다.
+## Write where you think
 
-- [사용 순서와 예시](docs/quick-start.ko.md)
-- [전체 속성 매핑](docs/markdown-properties.md)
-- [전체 원고 템플릿](templates/journal-manuscript.md)
-- [개발 및 검증 기록](docs/research/R-041-independent-markdown-editor.md)
+![Actual Markdown editing in Obsidian](docs/media/en-02.png)
 
-빈 문구는 템플릿을 상속합니다. `*-hide: true`는 의도적으로 숨깁니다. 필수 말미 항목을 숨길 때는 `*-omission-reason`을 입력합니다. YAML과 본문에 같은 초록·선언문이 있으면 한 번만 출력하고, 내용이 다르면 오류로 알립니다. 접수일·DOI·선언문·확인 기록은 자동으로 만들어 넣지 않습니다.
+Use headings, paragraphs, emphasis, lists, image links and Markdown tables. YAML properties give recurring information a home: the abstract, authors, correspondence, dates, running heads and statements before the references. Local images, Obsidian embeds and HTTPS image links are supported.
 
-## 이미지와 출력
+**Markdown remains the source.** The journal project holds appearance, placement and review decisions. Author DOCX files use an editable import-and-review workflow instead.
 
-원격 이미지의 실제 바이트와 해시를 프로젝트에 보관합니다. 이후 출력은 저장된 사본을 사용합니다. **원격 이미지 새로고침**은 동일 URL을 다시 조회합니다. 업로드 중 표시자·만료 URL·오류 페이지·누락 파일은 검사 결과에 나타납니다. 캐시가 최신 원격 이미지라는 보장은 하지 않습니다.
+## Same paper. Your journal.
 
-설치 글꼴을 Windows/macOS/Linux에서 검색하고 필요한 글꼴만 프로젝트에 보관합니다. 없는 서체는 명시적으로 대체합니다. 글꼴 라이선스는 사용자가 확보해야 하며 저장소에 상용 글꼴을 포함하지 않습니다.
+![Two journal identities applied to the same source](docs/media/en-03.png)
 
-PDF는 조판 결과입니다. IDML/AF는 디자인 도구에서 마지막 편집을 이어가기 위한 출력입니다. AF는 연결 본문 프레임, 벡터 PDF 그림, 마주 보는 페이지와 마스터, 동적 페이지 번호를 지원합니다. 현재 AF 사전 검사는 지원되지 않는 인라인 이미지나 확인된 크롭 등을 명시적으로 거절합니다. AF에서 추가한 수정은 Markdown으로 역변환하지 않습니다.
+Choose **Journal of Achmage** for deep navy, or **Journal of Command & Space** for teal and pink. Both include vector PDF logos. Duplicate a preset and use a short wizard to change logos, colors, fonts, running heads and publication text. The established composition rules stay consistent.
 
-## 개발
+These are demonstration identities, not published research journals or university endorsements. [Artwork credits](assets/brands/README.md).
+
+## Let the page take shape
+
+![Figures, tables and notes in the generated sample](docs/media/en-04.png)
+
+Two columns, heading hierarchy, figure-caption placement, table width, repeated headers and notes are handled by the composition engine. APA-oriented checks and optional Crossref lookups bring uncertain details into review. Missing facts still need an editor's judgment.
+
+## Keep the final touch within reach
+
+![The exported sample opened in Affinity with page objects and a master spread](docs/media/en-05.png)
+
+PDF is the composed result. AF and IDML let you continue in a design tool. Supported AF output includes connected body text frames, separate objects, vector PDF artwork, facing pages, masters and page-number fields.
+
+Affinity uses its own text engine: check line breaks and the final linked frame after editing. Unsupported export cases are reported. Changes in Affinity do not synchronize back to Markdown. The sample demonstrates supported features; it is not a promise of universal compatibility.
+
+## Install the preview release
+
+This independent plugin is **0.1.1**, separate from HanMark. It does not require HanMark. It is not yet listed in the Community directory; install the release files below.
+
+1. Download `achmage-academic-editor-ultra-0.1.1.zip` from [Releases](https://github.com/laguna821/achmage-academic-editor-ultra/releases/tag/0.1.1).
+2. Extract its three files into `<vault>/.obsidian/plugins/achmage-academic-editor-ultra/`.
+3. Reload Obsidian, enable **Achmage Academic Editor Ultra**, then choose **Open sample manuscript**.
+
+Requires Obsidian 1.8.9+. Desktop is required for native AF export. Installed fonts are discovered on Windows, macOS and Linux; missing fonts can be substituted. Commercial fonts are not bundled. macOS CI is retained; macOS hardware was not tested for this release.
+
+## Local by design
+
+Composition and APA checks run locally without an AI service or AI tokens. Crossref queries and remote image retrieval use the internet. Remote images are stored as project snapshots; refreshing them is explicit. Optional sample and video downloads are separate from the plugin.
+
+[Quick start](docs/quick-start.ko.md) · [Markdown properties](docs/markdown-properties.md) · [Blank manuscript](templates/journal-manuscript.md) · [Release media](docs/launch/README.md) · [Development evidence](docs/research/R-042-launch-package.md)
 
 ```sh
 npm ci --ignore-scripts
 npm run check
-npm run docs:yaml
 ```
 
-조판과 APA 검사는 로컬에서 실행합니다. Crossref 조회와 원격 이미지 다운로드만 인터넷을 사용하며 AI 서비스 또는 AI 토큰을 사용하지 않습니다. 개인 원고·폰트·시험 산출물은 Git에 포함하지 않습니다. macOS CI는 유지하며 macOS 실기 검증은 이번 배포의 필수 조건에서 제외합니다.
-
-## License
-
-MIT. HanMark에서 이어받은 코드와 제3자 라이브러리의 고지는 [LICENSE](LICENSE), [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)에 보존합니다.
+MIT. Built on HanMark. [License](LICENSE) · [Third-party notices](THIRD_PARTY_NOTICES.md). Brand artwork and demo music retain their respective credits and licenses.

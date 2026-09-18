@@ -27,3 +27,6 @@ READ-ME-FIRST.md
 src/journal/embedded.generated.ts
 src/journal/ocr.generated.ts
 scripts/__pycache__/
+
+src/journal/sample.generated.ts
+src/journal/brands.generated.ts

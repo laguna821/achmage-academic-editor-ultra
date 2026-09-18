@@ -10,6 +10,9 @@
 .aaeu-journal-start li { margin:8px 0; }
 .aaeu-journal-toolbar, .aaeu-journal-format { display:flex; align-items:center; flex-wrap:wrap; gap:5px; padding:8px; border-bottom:1px solid var(--background-modifier-border); }
 .aaeu-journal-toolbar button, .aaeu-journal-format button { font-size:12px; }
+.aaeu-proof-expanded .aaeu-journal-workspace { grid-template-columns: minmax(0,1fr); }
+.aaeu-proof-expanded .aaeu-journal-left, .aaeu-proof-expanded .aaeu-journal-right { display:none; }
+.aaeu-proof-expanded .aaeu-journal-page { max-width:900px; margin-left:auto; margin-right:auto; }
 .aaeu-journal-status { padding:6px 12px; font-size:12px; color:var(--text-muted); border-bottom:1px solid var(--background-modifier-border); white-space:pre-wrap; max-height:100px; overflow:auto; }
 .aaeu-journal-workspace { display:grid; grid-template-columns:minmax(270px, 1fr) minmax(310px, 1.15fr) 270px; flex:1; min-height:0; }
 .aaeu-journal-left { display:flex; flex-direction:column; min-height:0; min-width:0; }

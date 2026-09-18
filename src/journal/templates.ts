@@ -1,4 +1,6 @@
 import JSZip from "jszip";
+import {SAMPLE_FILES,SAMPLE_LOGO} from './sample.generated';
+import {JOURNAL_BRANDS} from './brands.generated';
 import { appearanceFromPreset,validateAppearance,type JournalAppearance } from "./appearance";
 import { HNMR_PRESET } from "./project";
 import { resolvedMaster } from "./master";
@@ -8,6 +10,18 @@ import {cloneJournal,newId,type BinaryStore,type JournalAsset,type JournalProjec
 export interface JournalTemplate {format:"hanmark-journal-template";version:1;id:string;name:string;appearance:JournalAppearance;assets:JournalAsset[]}
 export const HNMR_TEMPLATE:JournalTemplate={format:"hanmark-journal-template",version:1,id:"builtin:hnmr",name:"HNMR 기본",appearance:appearanceFromPreset(HNMR_PRESET),assets:[]};
 export const GENERAL_TEMPLATE:JournalTemplate={...cloneJournal(HNMR_TEMPLATE),id:"builtin:general",name:"일반 간행물",appearance:{...cloneJournal(HNMR_TEMPLATE.appearance),kind:"general",referenceChecks:false,journalName:"",logo:{mode:"none"},mark:{mode:"none"},publicationText:"{journal}",copyrightText:"",leftHeader:{mode:"title",text:""},rightHeader:{mode:"page",text:""}}};
+export const DEMO_TEMPLATE:JournalTemplate={...cloneJournal(HNMR_TEMPLATE),id:'builtin:aaeu-demo',name:'Academic Editor Ultra',assets:[SAMPLE_LOGO],appearance:{...cloneJournal(HNMR_TEMPLATE.appearance),kind:'general',referenceChecks:true,journalName:'ACADEMIC EDITOR ULTRA',colors:{key:'#174f3b',rule:'#174f3b',abstract:'#eef2ee'},logo:{mode:'asset',assetId:SAMPLE_LOGO.id},mark:{mode:'none'},publicationText:'ACADEMIC EDITOR ULTRA / A WORKING GUIDE',copyrightText:'Academic Editor Ultra — working guide. MIT licensed sample. Not a research publication.',leftHeader:{mode:'journal',text:''},rightHeader:{mode:'page',text:''}}};
+export const BRANDED_TEMPLATES:JournalTemplate[]=JOURNAL_BRANDS.map(brand=>{
+  const ach=brand.id==='achmage',name=ach?'Journal of Achmage':'Journal of Command & Space';
+  return {...cloneJournal(DEMO_TEMPLATE),id:'builtin:'+brand.id,name,assets:[brand.asset],appearance:{...cloneJournal(DEMO_TEMPLATE.appearance),journalName:name,colors:ach?{key:'#002E6E',rule:'#002E6E',abstract:'#edf2f8'}:{key:'#007F79',rule:'#E985A2',abstract:'#E8F6F4'},logo:{mode:'asset',assetId:brand.asset.id},publicationText:name.toUpperCase()+' / DEMONSTRATION EDITION',copyrightText:name+' · Demonstration journal preset. Sample text and artwork credits accompany the release. Not a published research article.',leftHeader:{mode:'journal',text:''}}};
+});
+const builtins=[HNMR_TEMPLATE,GENERAL_TEMPLATE,DEMO_TEMPLATE,...BRANDED_TEMPLATES];
+const templateBytes=async(store:BinaryStore,path:string):Promise<Uint8Array|null>=>{
+  if(path===SAMPLE_LOGO.path)return new TextEncoder().encode(SAMPLE_FILES.assets['aaeu-logo.svg']);
+  const brand=JOURNAL_BRANDS.find(b=>b.asset.path===path);
+  if(brand)return new Uint8Array(brand.data);
+  return store.get(path);
+};
 export const blankTemplate=():JournalTemplate=>({...cloneJournal(GENERAL_TEMPLATE),id:newId("template"),name:"내 템플릿"});
 export function validateTemplate(value:unknown):JournalTemplate{
   if(!value||typeof value!=="object")throw new Error("저널 템플릿이 아닙니다.");
@@ -38,17 +52,17 @@ export function applyTemplate(p:JournalProject,t:JournalTemplate):void{
   for(const asset of t.assets){const existing=p.assets.find(a=>a.id===asset.id);if(existing&&existing.sha256!==asset.sha256)throw new Error("원고와 템플릿의 로고 ID가 충돌합니다.");if(!existing)p.assets.push(cloneJournal(asset));}
 }
 export async function copyTemplateAssets(t:JournalTemplate,from:BinaryStore,to:BinaryStore):Promise<void>{
-  for(const a of t.assets){const bytes=await from.get(a.path);if(!bytes||await digestBytes(bytes)!==a.sha256)throw new Error("로고 파일이 없거나 바뀌었습니다: "+a.name);await to.put(a.path,bytes);}
+  for(const a of t.assets){const bytes=await templateBytes(from,a.path);if(!bytes||await digestBytes(bytes)!==a.sha256)throw new Error("로고 파일이 없거나 바뀌었습니다: "+a.name);await to.put(a.path,bytes);}
 }
 export class JournalTemplateLibrary{
   private queue:Promise<unknown>=Promise.resolve();
   constructor(readonly store:BinaryStore){}
   async list():Promise<JournalTemplate[]>{
     const bytes=await this.store.get("templates.json");
-    if(!bytes)return [cloneJournal(HNMR_TEMPLATE),cloneJournal(GENERAL_TEMPLATE)];
+    if(!bytes)return cloneJournal(builtins);
     if(bytes.length>1024*1024)throw new Error("템플릿 목록이 너무 큽니다.");
     const value:unknown=JSON.parse(new TextDecoder().decode(bytes));if(!Array.isArray(value)||value.length>100)throw new Error("템플릿 목록 형식이 잘못됐습니다.");
-    return [cloneJournal(HNMR_TEMPLATE),cloneJournal(GENERAL_TEMPLATE),...value.map(validateTemplate).filter(t=>!t.id.startsWith("builtin:"))];
+    return [...cloneJournal(builtins),...value.map(validateTemplate).filter(t=>!t.id.startsWith("builtin:"))];
   }
   private update(fn:(list:JournalTemplate[])=>JournalTemplate[]):Promise<void>{
     const task=this.queue.then(async()=>{const list=fn((await this.list()).filter(t=>!t.id.startsWith("builtin:")));if(list.length>100)throw new Error("템플릿은 최대 100개까지 저장할 수 있습니다.");await this.store.put("templates.json",jsonBytes(list));});
@@ -57,7 +71,7 @@ export class JournalTemplateLibrary{
   async save(input:JournalTemplate,source:BinaryStore):Promise<JournalTemplate>{
     const t=validateTemplate(input);
     if(t.id.startsWith("builtin:")){
-      const original=[HNMR_TEMPLATE,GENERAL_TEMPLATE].find(b=>b.id===t.id);
+      const original=builtins.find(b=>b.id===t.id);
       if(original&&JSON.stringify(validateTemplate(original))===JSON.stringify(t))return cloneJournal(original);
       t.id=newId("template");if(original&&t.name===original.name)t.name+=" 복사";
     }
@@ -68,7 +82,7 @@ export class JournalTemplateLibrary{
 }
 export async function exportTemplate(input:JournalTemplate,store:BinaryStore):Promise<Uint8Array>{
   const t=validateTemplate(input),zip=new JSZip();zip.file("template.json",jsonBytes(t));
-  for(const a of t.assets){const bytes=await store.get(a.path);if(!bytes||await digestBytes(bytes)!==a.sha256)throw new Error("로고 파일이 없습니다.");zip.file(a.path,bytes);}
+  for(const a of t.assets){const bytes=await templateBytes(store,a.path);if(!bytes||await digestBytes(bytes)!==a.sha256)throw new Error("로고 파일이 없습니다.");zip.file(a.path,bytes);}
   return zip.generateAsync({type:"uint8array",compression:"DEFLATE"});
 }
 export async function importTemplate(bytes:Uint8Array,store:BinaryStore):Promise<JournalTemplate>{

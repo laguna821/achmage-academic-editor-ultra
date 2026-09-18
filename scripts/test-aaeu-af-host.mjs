@@ -1,5 +1,6 @@
 import fs from "node:fs/promises";
 import path from "node:path";
+import os from "node:os";
 import {spawn} from "node:child_process";
 import {chromium} from "playwright";
 import assert from "node:assert/strict";
@@ -70,7 +71,7 @@ try {
     fontFiles.push({path,base64:bytes.toString('base64')});
   }
   for(const font of project.fonts){
-    const dirs=['C:/Windows/Fonts',process.env.HANMARK_GILL_FONTS??'C:/Users/안창현 미디어스쿨/Desktop/HNMR 폰트'];
+    const dirs=[path.join(process.env.WINDIR??'C:/Windows','Fonts'),process.env.HANMARK_GILL_FONTS??path.join(os.homedir(),'Desktop','HNMR 폰트')];
     let bytes;for(const dir of dirs)for(const name of [font.name,{'GIL___.TTF':'GIL_____.TTF','GILB__.TTF':'GILB____.TTF'}[font.name]].filter(Boolean)){try{bytes=await fs.readFile(path.join(dir,name));break;}catch{}}
     if(!bytes)throw Error('Fixture font unavailable: '+font.name);fontFiles.push({path:font.path,base64:bytes.toString('base64')});
   }

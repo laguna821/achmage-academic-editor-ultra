@@ -1,3 +1,6 @@
+import {t} from './i18n';
+import {uiLanguage} from './i18n';
+import {openSampleFiles,type SampleLanguage,type SampleFiles} from './sample';
 import {manuscriptTemplate,propertyTemplate,MARKDOWN_PROPERTIES} from './markdownProperties';
 import {snapshotImages,reconcileMarkdown,sourceTextHash,sourceLine} from './markdownSource';
 import {copyLegacyProject,copyLegacyTemplates} from './migration';
@@ -37,6 +40,7 @@ import { cloneJournal, inlineText, newId, type JournalProject, type JournalNode,
 export const JOURNAL_VIEW="aaeu-journal";
 export const PROJECTS="Academic Editor Ultra";
 const templateLibraries=new WeakMap<object,JournalTemplateLibrary>();
+const sampleAdapters=new WeakMap<object,SampleFiles>();
 type Panel="article"|"publication"|"objects"|"references"|"changes"|"preset"|"issues"|"editorial"|"endMatter";
 export class JournalView extends ItemView{
   private history=new JournalHistory(createJournalProject());
@@ -88,42 +92,48 @@ export class JournalView extends ItemView{
     this.closed=false;this.contentEl.empty();this.contentEl.addClass("aaeu-journal");
     const toolbar=this.contentEl.createDiv({cls:"aaeu-journal-toolbar"});
     const task=(label:string,run:()=>Promise<void>):void=>{action(toolbar,label,()=>this.run(run));};
-    task("새 Markdown 원고",()=>this.createMarkdownManuscript());
-    task("HanMark 프로젝트 복사",()=>this.migrateHanmark());
-    task("원문 열기",()=>this.openMarkdownSource());
-    task("기존 편집본을 원문 모드로 복사",()=>this.transitionMarkdown());
-    task("원격 이미지 새로고침",async()=>{await this.refreshBoundSource(true);await this.compose();});
-    task("새 Word 편집본",async()=>{await this.save();this.history=new JournalHistory(createJournalProject());this.store=new JournalStore(this.app.vault.adapter,PROJECTS+"/"+this.history.current.id);this.startDismissed=false;this.panel='article';this.result=null;this.preview?.clear();this.refresh();await this.save();});
-    task("프로젝트 열기",()=>this.openProject());
-    task("DOCX·그림 가져오기",()=>this.importFiles());
-    task('Markdown 가져오기',()=>this.pickMarkdown(false));task('Markdown 원문 다시 가져오기',()=>this.pickMarkdown(true));
-    task('이미지 캡션 검사',()=>this.scanCaptions());
-    action(toolbar,"저널 템플릿",()=>this.openTemplates());
-    task("글꼴 파일 등록",()=>this.importFonts());
-    task("글꼴 목록 새로고침",async()=>{const c=await discoverSystemFonts(true);this.status.setText(`설치 글꼴 ${new Set(c.fonts.map(f=>f.family)).size}개 · ${c.warnings.join(" ")}`);});
-    task("저장",()=>this.save());
-    task("프로젝트 ZIP",async()=>{await this.save();await this.gateway.saveFile(await exportJournalArchive(this.project,this.store),this.filename()+".hanmark.zip");});
-    task("ZIP 열기",async()=>{const files=await this.gateway.pickFiles({extensions:["zip"],maxFiles:1});if(!files[0])return;await this.save();const store=new JournalStore(this.app.vault.adapter,PROJECTS+"/"+newId("journal"));const project=await importJournalArchive(files[0].bytes,store);this.store=store;this.history=new JournalHistory(project);this.result=null;this.preview?.clear();this.refresh();await this.save();});
-    task("조판",()=>this.compose());
-    action(toolbar,"발행정보 확인",()=>{this.panel="publication";this.renderInspector();});
-    action(toolbar,"취소",()=>{this.controller?.abort();this.afController?.abort();this.ocrController?.abort();this.ocr.cancel();this.engine.cancel();this.fontKey="";});
-    task("검토용 PDF",()=>this.exportPdf(false));task("최종 PDF",()=>this.exportPdf(true));task("IDML로 내보내기",()=>this.exportIdml());
-    task("AF로 내보내기",()=>this.exportAf());
-    this.status=this.contentEl.createDiv({cls:"aaeu-journal-status",text:"원고 가져오기 → 본문 편집 → 템플릿·발행정보 확인 → 조판 → PDF"});
+    task(t('설명서 원고로 시작'),()=>this.openSampleManuscript());
+    task(t("새 Markdown 원고"),()=>this.createMarkdownManuscript());
+    task(t("HanMark 프로젝트 복사"),()=>this.migrateHanmark());
+    task(t("원문 열기"),()=>this.openMarkdownSource());
+    task(t("기존 편집본을 원문 모드로 복사"),()=>this.transitionMarkdown());
+    task(t("원격 이미지 새로고침"),async()=>{await this.refreshBoundSource(true);await this.compose();});
+    task(t("새 Word 편집본"),async()=>{await this.save();this.history=new JournalHistory(createJournalProject());this.store=new JournalStore(this.app.vault.adapter,PROJECTS+"/"+this.history.current.id);this.startDismissed=false;this.panel='article';this.result=null;this.preview?.clear();this.refresh();await this.save();});
+    task(t("프로젝트 열기"),()=>this.openProject());
+    task(t("DOCX·그림 가져오기"),()=>this.importFiles());
+    task(t('Markdown 가져오기'),()=>this.pickMarkdown(false));task(t('Markdown 원문 다시 가져오기'),()=>this.pickMarkdown(true));
+    task(t('이미지 캡션 검사'),()=>this.scanCaptions());
+    action(toolbar,t("저널 템플릿"),()=>this.openTemplates());
+    task(t("글꼴 파일 등록"),()=>this.importFonts());
+    task(t("글꼴 목록 새로고침"),async()=>{const c=await discoverSystemFonts(true);this.status.setText(`설치 글꼴 ${new Set(c.fonts.map(f=>f.family)).size}개 · ${c.warnings.join(" ")}`);});
+    task(t("저장"),()=>this.save());
+    task(t("프로젝트 ZIP"),async()=>{await this.save();await this.gateway.saveFile(await exportJournalArchive(this.project,this.store),this.filename()+".hanmark.zip");});
+    task(t("ZIP 열기"),async()=>{const files=await this.gateway.pickFiles({extensions:["zip"],maxFiles:1});if(!files[0])return;await this.save();const store=new JournalStore(this.app.vault.adapter,PROJECTS+"/"+newId("journal"));const project=await importJournalArchive(files[0].bytes,store);this.store=store;this.history=new JournalHistory(project);this.result=null;this.preview?.clear();this.refresh();await this.save();});
+    task(t("조판"),()=>this.compose());
+    action(toolbar,t("발행정보 확인"),()=>{this.panel="publication";this.renderInspector();});
+    action(toolbar,t("취소"),()=>{this.controller?.abort();this.afController?.abort();this.ocrController?.abort();this.ocr.cancel();this.engine.cancel();this.fontKey="";});
+    task(t("검토용 PDF"),()=>this.exportPdf(false));task(t("최종 PDF"),()=>this.exportPdf(true));task(t("IDML로 내보내기"),()=>this.exportIdml());
+    task(t("AF로 내보내기"),()=>this.exportAf());
+    const proofView=action(toolbar,uiLanguage()==='ko'?'지면 크게 보기':'Expand proof',()=>{
+      const expanded=this.contentEl.classList.toggle('aaeu-proof-expanded');
+      proofView.setAttribute('aria-pressed',String(expanded));
+      proofView.setText(uiLanguage()==='ko'?(expanded?'편집 패널 보기':'지면 크게 보기'):(expanded?'Show editing panels':'Expand proof'));
+    });proofView.setAttribute('aria-pressed','false');
+    this.status=this.contentEl.createDiv({cls:"aaeu-journal-status",text:t("원고 가져오기 → 본문 편집 → 템플릿·발행정보 확인 → 조판 → PDF")});
     this.startEl=this.contentEl.createDiv({cls:"aaeu-journal-start"});
     const workspace=this.workspaceEl=this.contentEl.createDiv({cls:"aaeu-journal-workspace"}),left=workspace.createDiv({cls:"aaeu-journal-left"});
     const formats=left.createDiv({cls:"aaeu-journal-format"});
-    action(formats,"되돌리기",()=>this.undo());action(formats,"다시 실행",()=>this.redo());
-    action(formats,"굵게",()=>this.editor?.format("bold"));action(formats,"기울임",()=>this.editor?.format("italic"));
-    choose(formats,"문단","0",{"0":"본문","1":"제목 1","2":"제목 2","3":"제목 3","4":"제목 4","5":"제목 5"},v=>this.editor?.heading(Number(v)));
-    for(const [id,label]of Object.entries({row:"행 추가",column:"열 추가",deleteRow:"행 삭제",deleteColumn:"열 삭제",merge:"셀 합치기",split:"셀 나누기"}))action(formats,label,()=>this.editor?.table(id as "row"));
+    action(formats,t("되돌리기"),()=>this.undo());action(formats,t("다시 실행"),()=>this.redo());
+    action(formats,t("굵게"),()=>this.editor?.format("bold"));action(formats,t("기울임"),()=>this.editor?.format("italic"));
+    choose(formats,t("문단"),"0",{"0":t("본문"),"1":t("제목 1"),"2":t("제목 2"),"3":t("제목 3"),"4":t("제목 4"),"5":t("제목 5")},v=>this.editor?.heading(Number(v)));
+    for(const [id,label]of Object.entries({row:t("행 추가"),column:t("열 추가"),deleteRow:t("행 삭제"),deleteColumn:t("열 삭제"),merge:t("셀 합치기"),split:t("셀 나누기")}))action(formats,label,()=>this.editor?.table(id as "row"));
     this.editorHost=left.createDiv({cls:"aaeu-journal-editor"});
     const center=workspace.createDiv({cls:"aaeu-journal-preview"});
     this.preview=new JournalPreview(center,id=>this.selectNode(id),o=>this.applyOverride(o));
     const right=workspace.createDiv({cls:"aaeu-journal-right"});
-    this.panelSelect=choose(right,"편집 패널",this.panel,{article:"원고 정보",publication:"발행정보 확인",endMatter:'논문 말미 정보',editorial:'원고 정리·연결',objects:"표·그림·프레임",references:"참고문헌",changes:"저자 변경 기록",preset:"저널 템플릿",issues:"검사 결과"},v=>{this.panel=v as Panel;this.renderInspector();});
+    this.panelSelect=choose(right,t("편집 패널"),this.panel,{article:t("원고 정보"),publication:t("발행정보 확인"),endMatter:t('논문 말미 정보'),editorial:t('원고 정리·연결'),objects:t("표·그림·프레임"),references:t("참고문헌"),changes:t("저자 변경 기록"),preset:t("저널 템플릿"),issues:t("검사 결과")},v=>{this.panel=v as Panel;this.renderInspector();});
     this.inspector=right.createDiv({cls:"aaeu-journal-inspector"});this.refresh();
-    const stale=():void=>{if(this.project.markdown){this.sourceStale=true;this.status.setText('원문 또는 이미지가 변경되었습니다 · 조판/내보내기에서 최신 내용 확인');}};
+    const stale=():void=>{if(this.project.markdown){this.sourceStale=true;this.status.setText(t('원문 또는 이미지가 변경되었습니다 · 조판/내보내기에서 최신 내용 확인'));}};
     this.registerEvent(this.app.vault.on('modify',file=>{if(this.project.markdown&&(file.path===this.project.markdown.path||this.project.markdown.dependencies.some(d=>d.localPath===file.path)))stale();}));
     this.registerEvent(this.app.vault.on('delete',file=>{if(file.path===this.project.markdown?.path)stale();}));
     this.registerEvent(this.app.vault.on('rename',(file,old)=>{if(this.project.markdown?.path===old){this.edit(p=>{p.markdown!.path=file.path;for(const source of p.sources)if(source.originalPath===old)source.originalPath=file.path;},false);stale();}}));
@@ -138,13 +148,13 @@ export class JournalView extends ItemView{
     this.contentEl.querySelector<HTMLElement>('.aaeu-journal-format')?.toggleClass('aaeu-hidden',!!this.project.markdown);
     if(this.project.markdown){
       this.editor?.destroy();this.editor=null;this.editorHost.empty();
-      this.editorHost.createEl('h3',{text:'Markdown 원문이 기준입니다'});
+      this.editorHost.createEl('h3',{text:t('Markdown 원문이 기준입니다')});
       this.editorHost.createEl('p',{text:this.project.markdown.path});
-      this.editorHost.createEl('p',{text:'본문과 YAML은 원문에서 수정하세요. 조판할 때 변경 내용과 로컬 이미지를 확인합니다. 원격 이미지는 저장된 사본을 사용하며, 새로고침 버튼으로 다시 조회합니다.'});
-      action(this.editorHost,'원문 편집',()=>this.run(()=>this.openMarkdownSource()));
-      action(this.editorHost,'원문 갱신·조판',()=>this.run(()=>this.compose()));
-      action(this.editorHost,'전체 YAML 속성 안내',()=>this.showPropertyGuide());
-      for(const n of this.project.document.blocks){const text=n.kind==='paragraph'||n.kind==='heading'?inlineText(n.content):n.kind==='table'?'표':n.kind==='figure'?'그림':'';if(text)action(this.editorHost,text.slice(0,160),()=>this.run(()=>this.openMarkdownSource(n.id)));}
+      this.editorHost.createEl('p',{text:t('본문과 YAML은 원문에서 수정하세요. 조판할 때 변경 내용과 로컬 이미지를 확인합니다. 원격 이미지는 저장된 사본을 사용하며, 새로고침 버튼으로 다시 조회합니다.')});
+      action(this.editorHost,t('원문 편집'),()=>this.run(()=>this.openMarkdownSource()));
+      action(this.editorHost,t('원문 갱신·조판'),()=>this.run(()=>this.compose()));
+      action(this.editorHost,t('전체 YAML 속성 안내'),()=>this.showPropertyGuide());
+      for(const n of this.project.document.blocks){const text=n.kind==='paragraph'||n.kind==='heading'?inlineText(n.content):n.kind==='table'?t('표'):n.kind==='figure'?t('그림'):'';if(text)action(this.editorHost,text.slice(0,160),()=>this.run(()=>this.openMarkdownSource(n.id)));}
       this.refreshStart();this.renderInspector();return;
     }
     const key=this.project.id+JSON.stringify(this.project.document.blocks);
@@ -162,23 +172,24 @@ export class JournalView extends ItemView{
     const empty=!this.startDismissed&&!this.project.sources.length&&!this.project.document.blocks.length&&!this.project.document.title;
     this.startEl.hidden=!empty;this.workspaceEl.hidden=empty;this.startEl.empty();
     if(!empty)return;
-    this.startEl.createEl('h2',{text:'저널 편집 시작'});
-    this.startEl.createEl('p',{text:'원고를 가져오면 본문·표·그림과 발행정보를 한 화면에서 편집하고, 학술지 PDF를 미리 볼 수 있습니다.'});
+    this.startEl.createEl('h2',{text:t('저널 편집 시작')});
+    this.startEl.createEl('p',{text:t('원고를 가져오면 본문·표·그림과 발행정보를 한 화면에서 편집하고, 학술지 PDF를 미리 볼 수 있습니다.')});
     const cards=this.startEl.createDiv({cls:'aaeu-journal-start-options'}),source=this.markdownSource();
     const option=(title:string,description:string,run:()=>Promise<void>):HTMLButtonElement=>{
       const button=cards.createEl('button',{cls:'aaeu-journal-start-option',attr:{type:'button','aria-label':title}});
       button.createEl('strong',{text:title});button.createSpan({text:description});button.onclick=()=>this.run(run);return button;
     };
-    const markdown=option('현재 Markdown 노트로 시작',source?source.file.basename:'먼저 Markdown 노트를 열어 주세요.',async()=>{const current=this.markdownSource();if(current)await this.importMarkdownNote(current.file,current.text);else new Notice('먼저 Markdown 노트를 열어 주세요.');});
+    option(t('설명서 원고로 시작'),t('직접 고치고 조판해 보는 설명서입니다.'),()=>this.openSampleManuscript());
+    const markdown=option(t('현재 Markdown 노트로 시작'),source?source.file.basename:t('먼저 Markdown 노트를 열어 주세요.'),async()=>{const current=this.markdownSource();if(current)await this.importMarkdownNote(current.file,current.text);else new Notice(t('먼저 Markdown 노트를 열어 주세요.'));});
     markdown.disabled=!source;
-    option('새 Markdown 원고 작성','전체 YAML 속성 및 본문 템플릿으로 시작합니다.',()=>this.createMarkdownManuscript());
-    option('Word 원고로 시작','저자가 보낸 .docx 원고를 선택합니다. 원고 안의 표·그림도 함께 가져옵니다.',()=>this.importFiles());
-    option('저장한 프로젝트 열기','이 볼트에서 편집하던 저널 프로젝트를 이어서 엽니다.',()=>this.openProject());
-    action(this.startEl,'빈 프로젝트에서 직접 작성',()=>{this.startDismissed=true;this.refreshStart();});
-    this.startEl.createEl('h3',{text:'가져온 다음에는'});
+    option(t('새 Markdown 원고 작성'),t('전체 YAML 속성 및 본문 템플릿으로 시작합니다.'),()=>this.createMarkdownManuscript());
+    option(t('Word 원고로 시작'),t('저자가 보낸 .docx 원고를 선택합니다. 원고 안의 표·그림도 함께 가져옵니다.'),()=>this.importFiles());
+    option(t('저장한 프로젝트 열기'),t('이 볼트에서 편집하던 저널 프로젝트를 이어서 엽니다.'),()=>this.openProject());
+    action(this.startEl,t('빈 프로젝트에서 직접 작성'),()=>{this.startDismissed=true;this.refreshStart();});
+    this.startEl.createEl('h3',{text:t('가져온 다음에는')});
     const steps=this.startEl.createEl('ol');
-    for(const text of ['저널 템플릿: 로고·문구·색상을 고릅니다. 필요한 설치 글꼴은 조판할 때 자동으로 가져옵니다.','발행정보 확인: 권·호, DOI, 교신저자와 논문 말미 정보를 입력합니다.','조판: 미리보기에서 본문·표·그림을 확인하고 검토용 PDF로 저장합니다.'])steps.createEl('li',{text});
-    this.startEl.createEl('p',{cls:'aaeu-journal-start-note',text:'Word는 별도 편집본으로, Markdown은 원문을 기준으로 작업합니다. 다른 Markdown 파일은 상단의 Markdown 가져오기를 이용하세요.'});
+    for(const text of [t('저널 템플릿: 로고·문구·색상을 고릅니다. 필요한 설치 글꼴은 조판할 때 자동으로 가져옵니다.'),t('발행정보 확인: 권·호, DOI, 교신저자와 논문 말미 정보를 입력합니다.'),t('조판: 미리보기에서 본문·표·그림을 확인하고 검토용 PDF로 저장합니다.')])steps.createEl('li',{text});
+    this.startEl.createEl('p',{cls:'aaeu-journal-start-note',text:t('Word는 별도 편집본으로, Markdown은 원문을 기준으로 작업합니다. 다른 Markdown 파일은 상단의 Markdown 가져오기를 이용하세요.')});
   }
   private edit(fn:(p:JournalProject)=>void,refresh=true):void{
     this.history.change(fn);this.dirty=true;if(refresh)this.refresh();
@@ -188,21 +199,21 @@ export class JournalView extends ItemView{
   }
   private undo():void{this.history.undo();this.dirty=true;this.refresh();void this.run(async()=>{await this.save();if(this.result)await this.compose();});}
   private redo():void{this.history.redo();this.dirty=true;this.refresh();void this.run(async()=>{await this.save();if(this.result)await this.compose();});}
-  private async save():Promise<void>{if(this.saveTimer)this.contentEl.win.clearTimeout(this.saveTimer);await this.store.save(this.project);this.dirty=false;if(this.status)this.status.setText("저장됨 · "+this.store.root);}
+  private async save():Promise<void>{if(this.saveTimer)this.contentEl.win.clearTimeout(this.saveTimer);await this.store.save(this.project);this.dirty=false;if(this.status)this.status.setText(t("저장됨 · ")+this.store.root);}
   private async openProject():Promise<void>{
-    if(!await this.app.vault.adapter.exists(PROJECTS)){new Notice("저장된 저널 프로젝트가 없습니다.");return;}
+    if(!await this.app.vault.adapter.exists(PROJECTS)){new Notice(t("저장된 저널 프로젝트가 없습니다."));return;}
     const listing=await this.app.vault.adapter.list(PROJECTS);
-    const modal=new Modal(this.app);modal.titleEl.setText("저널 프로젝트 열기");
+    const modal=new Modal(this.app);modal.titleEl.setText(t("저널 프로젝트 열기"));
     for(const root of listing.folders){
       try{const store=new JournalStore(this.app.vault.adapter,root),p=await store.load();action(modal.contentEl,p.document.title||root,()=>this.run(async()=>{await this.save();this.store=store;this.history=new JournalHistory(p);this.result=null;this.preview?.clear();modal.close();this.refresh();}));}catch{/* Invalid folders remain untouched. */}
     }modal.open();
   }
   private async roles(files:SelectedExternalFile[]):Promise<{file:SelectedExternalFile;role:JournalSource["role"]}[]|null>{
     return new Promise(resolve=>{
-      const modal=new Modal(this.app);modal.titleEl.setText("원고 파일 역할");
+      const modal=new Modal(this.app);modal.titleEl.setText(t("원고 파일 역할"));
       const rows=files.map<{file:SelectedExternalFile;role:JournalSource["role"]}>(file=>({file,role:/\.docx$/i.test(file.name)?"manuscript":"figures"}));let result:typeof rows|null=null;
-      for(const row of rows)choose(modal.contentEl,row.file.name,row.role,{manuscript:"본문",title:"제목·저자",tables:"별첨 표",figures:"별첨 그림",appendix:"부록",ignore:"원본만 보관"},v=>row.role=v as JournalSource["role"]);
-      action(modal.contentEl,"가져오기",()=>{result=rows;modal.close();});action(modal.contentEl,"취소",()=>modal.close());modal.onClose=()=>resolve(result);modal.open();
+      for(const row of rows)choose(modal.contentEl,row.file.name,row.role,{manuscript:t("본문"),title:t("제목·저자"),tables:t("별첨 표"),figures:t("별첨 그림"),appendix:t("부록"),ignore:t("원본만 보관")},v=>row.role=v as JournalSource["role"]);
+      action(modal.contentEl,t("가져오기"),()=>{result=rows;modal.close();});action(modal.contentEl,t("취소"),()=>modal.close());modal.onClose=()=>resolve(result);modal.open();
     });
   }
   private async importFiles():Promise<void>{
@@ -231,14 +242,14 @@ export class JournalView extends ItemView{
   private selectNode(id:string):void{
     this.selected=id;
     this.panel=id==='publication:title'?'article':id.startsWith('publication:')?'publication':this.project.document.endMatter?.some(e=>e.id===id||e.content.some(n=>n.id===id))?'endMatter':this.project.references.some(r=>r.id===id)?'references':'objects';
-    this.renderInspector();if(this.project.markdown)action(this.inspector,'원문 위치로 이동',()=>this.run(()=>this.openMarkdownSource(id)));this.preview?.focusNode(id,this.result?.boxes??[]);
+    this.renderInspector();if(this.project.markdown)action(this.inspector,t('원문 위치로 이동'),()=>this.run(()=>this.openMarkdownSource(id)));this.preview?.focusNode(id,this.result?.boxes??[]);
     for(const el of Array.from(this.inspector.querySelectorAll<HTMLElement>('[data-end-matter-id],[data-reference-id],[data-publication-zone]')))if(el.dataset.endMatterId===id||el.dataset.referenceId===id||el.dataset.publicationZone===id.replace('publication:',''))el.scrollIntoView({block:'nearest'});
   }
   private async pickMarkdown(reimport:boolean):Promise<void>{
     const source=[...this.project.sources].reverse().find(s=>s.format==='markdown');
-    const path=reimport?source?.originalPath:await textDialog(this.app,'Markdown 저널 원고','볼트 안의 Markdown 파일 경로',this.app.workspace.getActiveFile()?.path??'');
-    if(!path){if(reimport)throw new Error('현재 프로젝트에 연결된 Markdown 원문이 없습니다.');return;}
-    const file=this.app.vault.getAbstractFileByPath(path);if(!(file instanceof TFile)||file.extension!=='md')throw new Error('Markdown 파일을 찾을 수 없습니다.');
+    const path=reimport?source?.originalPath:await textDialog(this.app,t('Markdown 저널 원고'),t('볼트 안의 Markdown 파일 경로'),this.app.workspace.getActiveFile()?.path??'');
+    if(!path){if(reimport)throw new Error(t('현재 프로젝트에 연결된 Markdown 원문이 없습니다.'));return;}
+    const file=this.app.vault.getAbstractFileByPath(path);if(!(file instanceof TFile)||file.extension!=='md')throw new Error(t('Markdown 파일을 찾을 수 없습니다.'));
     await this.importMarkdownNote(file,await this.app.vault.read(file),reimport);
   }
   async importMarkdownNote(file:TFile,text:string,reimport=false):Promise<void>{
@@ -275,12 +286,31 @@ export class JournalView extends ItemView{
   }
   async createMarkdownManuscript():Promise<void>{
     const templates=await this.library().list();
-    const selected=await new Promise<string|null>(resolve=>{const modal=new Modal(this.app);let value:string|null=null;modal.titleEl.setText('새 원고의 저널 템플릿');for(const t of templates)action(modal.contentEl,t.name,()=>{value=t.id;modal.close();});modal.onClose=()=>resolve(value);modal.open();});
+    const selected=await new Promise<string|null>(resolve=>{const modal=new Modal(this.app);let value:string|null=null;modal.titleEl.setText(t('새 원고의 저널 템플릿'));for(const t of templates)action(modal.contentEl,t.name,()=>{value=t.id;modal.close();});modal.onClose=()=>resolve(value);modal.open();});
     if(!selected)return;
-    const path=await textDialog(this.app,'저널 Markdown 원고 만들기','볼트 안에 새로 만들 파일 경로','Journal manuscript.md');if(!path)return;
-    const target=path.endsWith('.md')?path:path+'.md';if(this.app.vault.getAbstractFileByPath(target))throw new Error('같은 이름의 파일이 있습니다. 다른 이름을 입력하세요.');
+    const path=await textDialog(this.app,t('저널 Markdown 원고 만들기'),t('볼트 안에 새로 만들 파일 경로'),'Journal manuscript.md');if(!path)return;
+    const target=path.endsWith('.md')?path:path+'.md';if(this.app.vault.getAbstractFileByPath(target))throw new Error(t('같은 이름의 파일이 있습니다. 다른 이름을 입력하세요.'));
     const file=await this.app.vault.create(target,manuscriptTemplate(selected));
     await this.importSourceNote(file,await this.app.vault.read(file),false);await this.openMarkdownSource('property:aaeu-title');
+  }
+  async openSampleManuscript(language:SampleLanguage=uiLanguage(),newCopy=false):Promise<void>{
+    const path='Academic Editor Ultra Samples/'+(language==='ko'?'한국어':'English')+'/Start here.md';
+    if(!newCopy&&await this.app.vault.adapter.exists(path)){
+      const choice=await new Promise<'open'|'copy'|null>(resolve=>{
+        const modal=new Modal(this.app);modal.titleEl.setText(t('샘플 원고'));let value:'open'|'copy'|null=null;
+        action(modal.contentEl,t('기존 샘플 열기'),()=>{value='open';modal.close();});
+        action(modal.contentEl,t('새 사본 만들기'),()=>{value='copy';modal.close();});
+        action(modal.contentEl,t('취소'),()=>modal.close());modal.onClose=()=>resolve(value);modal.open();
+      });
+      if(!choice)return;newCopy=choice==='copy';
+    }
+    const vault=this.app.vault;let files=sampleAdapters.get(vault);
+    if(!files){files={exists:path=>vault.adapter.exists(path),read:path=>vault.adapter.read(path),mkdir:async path=>{await vault.createFolder(path);},write:async(path,text)=>{await vault.create(path,text);}};sampleAdapters.set(vault,files);}
+    const sample=await openSampleFiles(files,language,newCopy);
+    const file=vault.getAbstractFileByPath(sample.path);
+    if(!(file instanceof TFile))throw new Error(t('Markdown 파일을 찾을 수 없습니다.'));
+    await this.importMarkdownNote(file,await this.app.vault.read(file));
+    await this.openMarkdownSource('property:aaeu-title');
   }
   private async importSourceNote(file:TFile,text:string,reimport:boolean,refreshRemote=false):Promise<void>{
     this.ocrController?.abort();await this.save();
@@ -290,16 +320,16 @@ export class JournalView extends ItemView{
     for(const id of [next.preset.master?.logoAssetId,next.preset.master?.crossmarkAssetId]){const a=previous.assets.find(a=>a.id===id);if(a){next.assets.push(cloneJournal(a));if(!reimport){const bytes=await this.store.get(a.path);if(bytes)await store.put(a.path,bytes);}}}
     const front=text.match(/^\uFEFF?---\r?\n([\s\S]*?)\r?\n(?:---|\.\.\.)\s*(?:\r?\n|$)/);
     const parsed:unknown=front?parseYaml(front[1]):{};
-    if(!parsed||typeof parsed!=='object'||Array.isArray(parsed))throw new Error('YAML 속성은 이름: 값 형식이어야 합니다.');
+    if(!parsed||typeof parsed!=='object'||Array.isArray(parsed))throw new Error(t('YAML 속성은 이름: 값 형식이어야 합니다.'));
     const metadata=parsed as Record<string,unknown>,templateId=typeof metadata['aaeu-template']==='string'?metadata['aaeu-template']:undefined;
-    if(templateId){const library=this.library(),template=(await library.list()).find(t=>t.id===templateId);if(template){if(!reimport||previous.markdown?.templateId!==templateId){await copyTemplateAssets(template,library.store,store);applyTemplate(next,template);}}else next.issues.push({id:'property:aaeu-template',code:'markdown-property',severity:'error',nodeId:'property:aaeu-template',message:'aaeu-template: 등록된 템플릿을 찾을 수 없습니다: '+templateId});}
+    if(templateId){const library=this.library(),template=(await library.list()).find(t=>t.id===templateId);if(template){if(!reimport||previous.markdown?.templateId!==templateId){await copyTemplateAssets(template,library.store,store);applyTemplate(next,template);}}else next.issues.push({id:'property:aaeu-template',code:'markdown-property',severity:'error',nodeId:'property:aaeu-template',message:t('aaeu-template: 등록된 템플릿을 찾을 수 없습니다: ')+templateId});}
     if(refreshRemote)clearImageMemoryCache();
     const loader=createObsidianImageLoader(this.app,file);
     const images=snapshotImages(store,reimport?previous.markdown?.dependencies??[]:[],async src=>{const image=await loader(src);let link=src;try{link=decodeURI(src);}catch{/* Keep literal path. */}const local=/^(https?:|data:)/i.test(src)?undefined:this.app.metadataCache.getFirstLinkpathDest(link,file.path);return {bytes:new Uint8Array(image.data),mime:image.contentType,name:src.split('/').at(-1)?.split(/[?#]/)[0],localPath:local?.path};},refreshRemote);
     await importMarkdown(next,{name:file.name,path:file.path,text,metadata,resolveImage:images.resolve},store);
     next.markdown={mode:'source',path:file.path,sha256:await sourceTextHash(text),properties:metadata,templateId,dependencies:images.dependencies};
     const result=reimport?reconcileMarkdown(previous,next):next;
-    if(this.closed||this.project.id!==previousId||this.project.revision!==previousRevision)throw new Error('원문을 읽는 동안 프로젝트가 변경됐습니다. 다시 가져오세요.');
+    if(this.closed||this.project.id!==previousId||this.project.revision!==previousRevision)throw new Error(t('원문을 읽는 동안 프로젝트가 변경됐습니다. 다시 가져오세요.'));
     this.store=store;this.history=new JournalHistory(result);this.result=null;this.preview?.clear();this.sourceStale=false;this.refresh();await this.save();
   }
   private refreshBoundSource(refreshRemote=false):Promise<void>{
@@ -315,47 +345,47 @@ export class JournalView extends ItemView{
     if(changed||refreshRemote)await this.importSourceNote(file,text,true,refreshRemote);else this.sourceStale=false;
   }
   private async assertSourceFresh():Promise<void>{
-    const result=this.result;await this.refreshBoundSource();if(result!==this.result||this.sourceStale)throw new Error('내보내는 동안 원문이 변경됐습니다. 새 미리보기를 확인하세요.');
+    const result=this.result;await this.refreshBoundSource();if(result!==this.result||this.sourceStale)throw new Error(t('내보내는 동안 원문이 변경됐습니다. 새 미리보기를 확인하세요.'));
   }
   private async openMarkdownSource(id=''):Promise<void>{
     const path=this.project.markdown?.path??[...this.project.sources].reverse().find(s=>s.format==='markdown')?.originalPath;
-    const file=path?this.app.vault.getAbstractFileByPath(path):null;if(!(file instanceof TFile))throw new Error('연결된 Markdown 원문이 없습니다.');
+    const file=path?this.app.vault.getAbstractFileByPath(path):null;if(!(file instanceof TFile))throw new Error(t('연결된 Markdown 원문이 없습니다.'));
     const text=await this.sourceText(file),leaf=this.app.workspace.getLeaf('tab');await leaf.openFile(file);
     if(leaf.view instanceof MarkdownView){const line=sourceLine(this.project,id,text);leaf.view.editor.setCursor({line,ch:0});leaf.view.editor.scrollIntoView({from:{line,ch:0},to:{line,ch:0}},true);}
   }
   private showPropertyGuide():void{
-    const modal=new Modal(this.app);modal.titleEl.setText('저널 YAML 속성 · 원문은 자동 수정하지 않습니다');
-    const keys=this.project.markdown?.properties??{};const area=modal.contentEl.createEl('textarea');area.rows=18;area.value=propertyTemplate(this.project.preset.template?.id);area.readOnly=true;area.setAttribute('aria-label','전체 YAML 속성 템플릿');
-    for(const spec of MARKDOWN_PROPERTIES)modal.contentEl.createEl('p',{text:spec.key+' · '+spec.label+(keys[spec.key]!==undefined?' · 입력됨':'')});modal.open();
+    const modal=new Modal(this.app);modal.titleEl.setText(t('저널 YAML 속성 · 원문은 자동 수정하지 않습니다'));
+    const keys=this.project.markdown?.properties??{};const area=modal.contentEl.createEl('textarea');area.rows=18;area.value=propertyTemplate(this.project.preset.template?.id);area.readOnly=true;area.setAttribute('aria-label',t('전체 YAML 속성 템플릿'));
+    for(const spec of MARKDOWN_PROPERTIES)modal.contentEl.createEl('p',{text:spec.key+' · '+spec.label+(keys[spec.key]!==undefined?t(' · 입력됨'):'')});modal.open();
   }
   private async transitionMarkdown():Promise<void>{
-    if(this.project.markdown){new Notice('이미 Markdown 원문 모드입니다.');return;}
+    if(this.project.markdown){new Notice(t('이미 Markdown 원문 모드입니다.'));return;}
     const source=[...this.project.sources].reverse().find(s=>s.format==='markdown'),file=source?.originalPath?this.app.vault.getAbstractFileByPath(source.originalPath):null;
     if(!(file instanceof TFile))throw new Error('이전 Markdown 원문이 없습니다. Markdown 가져오기로 원문을 선택하세요. 기존 프로젝트는 그대로 보존됩니다.');
     const text=await this.sourceText(file),modal=new Modal(this.app);modal.titleEl.setText('원문 모드로 별도 복사 · 기존 편집본 보존');
     modal.contentEl.createEl('p',{text:'왼쪽 편집본의 수동 수정은 자동으로 Markdown에 합치지 않습니다. 아래 편집본과 원문을 대조하여 필요한 수정을 원문에 먼저 반영하세요.'});
     for(const [label,value]of [['기존 편집본',JSON.stringify(this.project.document,null,2)],['현재 Markdown 원문',text]]){modal.contentEl.createEl('h3',{text:label});const area=modal.contentEl.createEl('textarea');area.value=value;area.readOnly=true;area.rows=10;area.setAttribute('aria-label',label);}
     action(modal.contentEl,'차이를 확인했습니다 · 원문으로 새 프로젝트 복사',()=>this.run(async()=>{await this.importSourceNote(file,await this.sourceText(file),false);modal.close();}));
-    action(modal.contentEl,'취소',()=>modal.close());modal.open();
+    action(modal.contentEl,t('취소'),()=>modal.close());modal.open();
   }
   private sourceInspector(host:HTMLElement):void{
-    host.createEl('h3',{text:'원문 속성·내용 확인'});host.createEl('p',{text:'제목·초록·저자·본문·선언문은 연결된 Markdown에서 수정합니다. 템플릿·배치 설정과 확인 기록은 이 프로젝트에 저장됩니다.'});
-    action(host,'원문 편집',()=>this.run(()=>this.openMarkdownSource(this.selected)));
-    action(host,'전체 YAML 속성 안내',()=>this.showPropertyGuide());
+    host.createEl('h3',{text:t('원문 속성·내용 확인')});host.createEl('p',{text:t('제목·초록·저자·본문·선언문은 연결된 Markdown에서 수정합니다. 템플릿·배치 설정과 확인 기록은 이 프로젝트에 저장됩니다.')});
+    action(host,t('원문 편집'),()=>this.run(()=>this.openMarkdownSource(this.selected)));
+    action(host,t('전체 YAML 속성 안내'),()=>this.showPropertyGuide());
     if(this.panel==='endMatter')for(const item of this.project.document.endMatter??[]){
-      const card=host.createDiv({cls:'aaeu-journal-card'});card.createEl('strong',{text:item.title});card.createEl('p',{text:item.content.map(n=>inlineText(n.content)).join('\n')||'미입력'});
-      action(card,'이 내용 확인',()=>this.edit(p=>{const e=p.document.endMatter!.find(e=>e.id===item.id)!;e.reviewed=endMatterSnapshot(e);}));
+      const card=host.createDiv({cls:'aaeu-journal-card'});card.createEl('strong',{text:item.title});card.createEl('p',{text:item.content.map(n=>inlineText(n.content)).join('\n')||t('미입력')});
+      action(card,t('이 내용 확인'),()=>this.edit(p=>{const e=p.document.endMatter!.find(e=>e.id===item.id)!;e.reviewed=endMatterSnapshot(e);}));
     }
-    action(host,'원문 다시 연결',()=>this.run(async()=>{const path=await textDialog(this.app,'원문 다시 연결','볼트 Markdown 경로',this.project.markdown!.path);if(!path)return;const f=this.app.vault.getAbstractFileByPath(path);if(!(f instanceof TFile)||f.extension!=='md')throw new Error('Markdown 파일을 찾을 수 없습니다.');await this.importSourceNote(f,await this.sourceText(f),true);}));
+    action(host,t('원문 다시 연결'),()=>this.run(async()=>{const path=await textDialog(this.app,t('원문 다시 연결'),t('볼트 Markdown 경로'),this.project.markdown!.path);if(!path)return;const f=this.app.vault.getAbstractFileByPath(path);if(!(f instanceof TFile)||f.extension!=='md')throw new Error(t('Markdown 파일을 찾을 수 없습니다.'));await this.importSourceNote(f,await this.sourceText(f),true);}));
     if(this.panel==='references'){
-      action(host,'Crossref 후보 조회 · 원문 교정 제안',()=>this.run(async()=>{const q=await textDialog(this.app,'Crossref 조회','조회할 DOI 또는 서지정보','');if(!q)return;const records=await lookupCrossref(q,async url=>(await requestUrl({url})).json as unknown);const modal=new Modal(this.app);modal.titleEl.setText('조회 결과 · 원문과 대조하여 반영하세요');for(const r of records){modal.contentEl.createEl('p',{text:[r.title,r.year,r.containerTitle,r.doi?'https://doi.org/'+r.doi:''].filter(Boolean).join(' · ')});}modal.open();}));
+      action(host,t('Crossref 후보 조회 · 원문 교정 제안'),()=>this.run(async()=>{const q=await textDialog(this.app,t('Crossref 조회'),t('조회할 DOI 또는 서지정보'),'');if(!q)return;const records=await lookupCrossref(q,async url=>(await requestUrl({url})).json as unknown);const modal=new Modal(this.app);modal.titleEl.setText(t('조회 결과 · 원문과 대조하여 반영하세요'));for(const r of records){modal.contentEl.createEl('p',{text:[r.title,r.year,r.containerTitle,r.doi?'https://doi.org/'+r.doi:''].filter(Boolean).join(' · ')});}modal.open();}));
       for(const r of this.project.references)action(host,r.raw.slice(0,100),()=>this.run(()=>this.openMarkdownSource(r.id)));
     }else if(this.panel==='objects'){
-      host.createEl('p',{text:'표·그림 내용과 순서는 원문을 따릅니다. 출력 위치 미세 조정은 미리보기에서 할 수 있습니다.'});
+      host.createEl('p',{text:t('표·그림 내용과 순서는 원문을 따릅니다. 출력 위치 미세 조정은 미리보기에서 할 수 있습니다.')});
     }else{
-      for(const key of ['aaeu-title','aaeu-abstract','aaeu-running-title','aaeu-received','aaeu-revised','aaeu-accepted','aaeu-corresponding-name','aaeu-data-text','aaeu-conflict-text','aaeu-acknowledgments-text'])action(host,key+' · '+JSON.stringify(this.project.markdown?.properties[key]??'템플릿/본문 사용').slice(0,85),()=>this.run(()=>this.openMarkdownSource('property:'+key)));
+      for(const key of ['aaeu-title','aaeu-abstract','aaeu-running-title','aaeu-received','aaeu-revised','aaeu-accepted','aaeu-corresponding-name','aaeu-data-text','aaeu-conflict-text','aaeu-acknowledgments-text'])action(host,key+' · '+JSON.stringify(this.project.markdown?.properties[key]??t('템플릿/본문 사용')).slice(0,85),()=>this.run(()=>this.openMarkdownSource('property:'+key)));
     }
-    action(host,'현재 발행정보 확인·확정',()=>this.run(async()=>{await this.refreshBoundSource();if(!this.result||this.result.fingerprint!==await digestBytes(jsonBytes(this.project))){await this.compose();this.status.setText('갱신된 미리보기를 확인한 뒤 다시 확정하세요.');return;}const snapshot=publicationSnapshot(this.project,this.result.pageCount);this.edit(p=>{p.document.publication={...p.document.publication,mode:publicationMode(p.document),review:{snapshot,at:new Date().toISOString()}};},false);await this.save();}));
+    action(host,t('현재 발행정보 확인·확정'),()=>this.run(async()=>{await this.refreshBoundSource();if(!this.result||this.result.fingerprint!==await digestBytes(jsonBytes(this.project))){await this.compose();this.status.setText(t('갱신된 미리보기를 확인한 뒤 다시 확정하세요.'));return;}const snapshot=publicationSnapshot(this.project,this.result.pageCount);this.edit(p=>{p.document.publication={...p.document.publication,mode:publicationMode(p.document),review:{snapshot,at:new Date().toISOString()}};},false);await this.save();}));
   }
   async migrateHanmark():Promise<void>{
     await copyLegacyTemplates(this.app.vault.adapter,this.app.vault.configDir);
@@ -392,8 +422,8 @@ export class JournalView extends ItemView{
   }
   private async cropFigure(id:string):Promise<void>{
     const n=this.project.document.blocks.find(n=>n.id===id);if(n?.kind!=='figure')return;
-    const asset=this.project.assets.find(a=>a.id===n.assetId);if(!asset)throw new Error('원본 그림을 먼저 연결하세요.');
-    const bytes=await this.store.get(asset.path);if(!bytes)throw new Error('그림 파일이 없습니다.');
+    const asset=this.project.assets.find(a=>a.id===n.assetId);if(!asset)throw new Error(t('원본 그림을 먼저 연결하세요.'));
+    const bytes=await this.store.get(asset.path);if(!bytes)throw new Error(t('그림 파일이 없습니다.'));
     const detection=this.project.editorial?.detections.find(d=>d.assetSha256===asset.sha256);
     await cropDialog(this.app,n,asset,bytes,detection,(crop,title)=>this.edit(p=>{const item=p.document.blocks.find(b=>b.id===id);if(item?.kind!=='figure'||item.assetId!==asset.id)return;item.crop=crop;item.caption??={number:'',title:[],notes:[]};if(inlineText(item.caption.title)!==title)item.caption.title=[{text:title}];const scan=p.editorial?.detections.find(d=>d.assetId===asset.id&&d.assetSha256===asset.sha256);if(scan)scan.review=crop?'crop':'keep';}));
   }
@@ -411,20 +441,20 @@ export class JournalView extends ItemView{
         this.composeAgain=false;
         if(this.renderTimer){this.contentEl.win.clearTimeout(this.renderTimer);this.renderTimer=null;}
         const prepared=cloneJournal(this.project),revision=this.project.revision,projectId=this.project.id;
-        this.status.setText("필요한 설치 글꼴을 확인하고 있습니다.");
+        this.status.setText(t("필요한 설치 글꼴을 확인하고 있습니다."));
         if(!await resolveFonts(this.app,prepared,this.store))return;
         if(this.closed||controller.signal.aborted)return;
         if(this.project.id!==projectId||this.project.revision!==revision){this.composeAgain=true;continue;}
         if(JSON.stringify(prepared.fonts)!==JSON.stringify(this.project.fonts)||JSON.stringify(prepared.preset)!==JSON.stringify(this.project.preset))this.edit(p=>{p.fonts=prepared.fonts;p.preset=prepared.preset;},false);
         const snapshot=validateProject(this.project),key=snapshot.fonts.map(f=>f.sha256).join(",");
-        if(this.fontKey!==key||!key){const fonts:Uint8Array[]=[];for(const path of new Set(snapshot.fonts.map(f=>f.path))){const bytes=await this.store.get(path);if(!bytes)throw new Error("등록한 글꼴 파일이 없습니다.");fonts.push(bytes);}if(controller.signal.aborted||this.closed)return;await this.engine.initialize(fonts);this.fontKey=key;}
+        if(this.fontKey!==key||!key){const fonts:Uint8Array[]=[];for(const path of new Set(snapshot.fonts.map(f=>f.path))){const bytes=await this.store.get(path);if(!bytes)throw new Error(t("등록한 글꼴 파일이 없습니다."));fonts.push(bytes);}if(controller.signal.aborted||this.closed)return;await this.engine.initialize(fonts);this.fontKey=key;}
         const result=await this.composer.compose(snapshot,this.store,controller.signal,message=>this.status.setText(message),true);
         if(this.closed||controller.signal.aborted)return;
         await this.refreshBoundSource();
-        if(result.fingerprint!==await digestBytes(jsonBytes(this.project))){this.composeAgain=true;this.status.setText("조판 중 원고가 바뀌었습니다. 다시 조판합니다.");continue;}
+        if(result.fingerprint!==await digestBytes(jsonBytes(this.project))){this.composeAgain=true;this.status.setText(t("조판 중 원고가 바뀌었습니다. 다시 조판합니다."));continue;}
         this.result=result;await this.preview?.show(result);
         if(this.closed||controller.signal.aborted)return;
-        this.status.setText(`${result.pageCount}쪽 · ${(result.elapsedMs/1000).toFixed(1)}초 · 검사 ${result.issues.length}건`);this.renderInspector();
+        this.status.setText(uiLanguage()==='ko'?`${result.pageCount}쪽 · ${(result.elapsedMs/1000).toFixed(1)}초 · 검사 ${result.issues.length}건`:`${result.pageCount} pages · ${(result.elapsedMs/1000).toFixed(1)} s · ${result.issues.length} checks`);this.renderInspector();
       }while(this.composeAgain&&!this.closed&&!controller.signal.aborted);
     }finally{this.busy=false;this.controller=null;this.composeAgain=false;}
   }
@@ -432,26 +462,26 @@ export class JournalView extends ItemView{
     await this.refreshBoundSource();
     if(!this.result?.editableSource||this.result.fingerprint!==await digestBytes(jsonBytes(this.project)))await this.compose();
     const result=this.result,revision=this.project.revision;
-    if(!result?.editableSource||result.fingerprint!==await digestBytes(jsonBytes(this.project)))throw new Error("현재 원고의 조판을 먼저 완료하세요.");
+    if(!result?.editableSource||result.fingerprint!==await digestBytes(jsonBytes(this.project)))throw new Error(t("현재 원고의 조판을 먼저 완료하세요."));
     const snapshot=await journalEditableSnapshot(result,this.store),output=await exportIdml(snapshot,result.pdf);
-    if(this.closed||this.project.revision!==revision||this.result!==result)throw new Error("내보내는 동안 원고가 변경됐습니다. 다시 내보내세요.");
+    if(this.closed||this.project.revision!==revision||this.result!==result)throw new Error(t("내보내는 동안 원고가 변경됐습니다. 다시 내보내세요."));
     await this.save();await this.assertSourceFresh();await this.gateway.saveFile(output.package,this.filename()+"_edit.zip");
-    this.status.setText("IDML 편집 패키지 저장 완료 · 압축을 풀고 Affinity에서 .idml을 여세요.");
+    this.status.setText(t("IDML 편집 패키지 저장 완료 · 압축을 풀고 Affinity에서 .idml을 여세요."));
   }
   private async exportAf():Promise<void>{
     await this.refreshBoundSource();
-    if(!Platform.isDesktopApp)throw new Error("AF 내보내기는 데스크톱 앱에서 사용할 수 있습니다.");
-    if(this.afController){new Notice("AF 내보내기가 진행 중입니다. 상단 취소 버튼으로 중단할 수 있습니다.");return;}
+    if(!Platform.isDesktopApp)throw new Error(t("AF 내보내기는 데스크톱 앱에서 사용할 수 있습니다."));
+    if(this.afController){new Notice(t("AF 내보내기가 진행 중입니다. 상단 취소 버튼으로 중단할 수 있습니다."));return;}
     const controller=this.afController=new AbortController();
     try{
       const options=await afDialog(this.app,controller.signal);if(!options||this.closed||controller.signal.aborted)return;
       if(!this.result?.editableSource||this.result.fingerprint!==await digestBytes(jsonBytes(this.project)))await this.compose();
       if(this.closed||controller.signal.aborted)return;
       const result=this.result,project=cloneJournal(this.project),store=this.store;
-      if(!result?.editableSource||result.fingerprint!==await digestBytes(jsonBytes(project)))throw new Error("현재 원고의 조판을 먼저 완료하세요.");
+      if(!result?.editableSource||result.fingerprint!==await digestBytes(jsonBytes(project)))throw new Error(t("현재 원고의 조판을 먼저 완료하세요."));
       const current=():void=>{
-        if(this.closed||controller.signal.aborted)throw new DOMException("AF 내보내기를 취소했습니다.","AbortError");
-        if(this.project.id!==project.id||this.project.revision!==project.revision||this.store!==store||this.result!==result)throw new Error("내보내는 동안 원고가 변경됐습니다. 다시 내보내세요.");
+        if(this.closed||controller.signal.aborted)throw new DOMException(t("AF 내보내기를 취소했습니다."),"AbortError");
+        if(this.project.id!==project.id||this.project.revision!==project.revision||this.store!==store||this.result!==result)throw new Error(t("내보내는 동안 원고가 변경됐습니다. 다시 내보내세요."));
       };
       const snapshot=await journalEditableSnapshot(result,store);current();
       const {journalAfExport}=await import("./affinityExport");
@@ -464,15 +494,15 @@ export class JournalView extends ItemView{
       await this.assertSourceFresh();current();
       const saved=await this.gateway.saveFile(options.format==="af"?output.af:output.package,file);
       if(this.closed)return;
-      this.status.setText(saved.cancelled?"AF 파일 저장을 취소했습니다.":saved.method==="download"?"AF 다운로드를 요청했습니다. 다운로드 폴더를 확인하세요.":"AF 편집 파일 저장 완료 · Affinity에서 열어 최종 줄바꿈과 넘치는 본문을 확인하세요.");
-    }catch(e){if(controller.signal.aborted){if(!this.closed)this.status.setText("AF 내보내기를 취소했습니다.");}else throw e;}
+      this.status.setText(saved.cancelled?t("AF 파일 저장을 취소했습니다."):saved.method==="download"?t("AF 다운로드를 요청했습니다. 다운로드 폴더를 확인하세요."):t("AF 편집 파일 저장 완료 · Affinity에서 열어 최종 줄바꿈과 넘치는 본문을 확인하세요."));
+    }catch(e){if(controller.signal.aborted){if(!this.closed)this.status.setText(t("AF 내보내기를 취소했습니다."));}else throw e;}
     finally{if(this.afController===controller)this.afController=null;}
   }
   private async exportPdf(final:boolean):Promise<void>{
     await this.refreshBoundSource();
     if(final&&!this.project.document.title.trim()){this.panel='article';this.renderInspector();throw new Error('최종 PDF에는 제목이 필요합니다. 원고 정보에서 입력하세요. 검토용 PDF에는 누락 표시를 남깁니다.');}
     if(!this.result||this.result.fingerprint!==await digestBytes(jsonBytes(this.project)))await this.compose();
-    if(!this.result||this.result.fingerprint!==await digestBytes(jsonBytes(this.project)))throw new Error("현재 원고의 조판을 먼저 완료하세요.");
+    if(!this.result||this.result.fingerprint!==await digestBytes(jsonBytes(this.project)))throw new Error(t("현재 원고의 조판을 먼저 완료하세요."));
     if(final&&academicChecks(this.project)&&!publicationReviewed(this.project,this.result.pageCount)){this.panel="publication";this.renderInspector();throw new Error("미리보기에서 발행정보를 확인하고 확정하세요. 값이나 최종 쪽수가 바뀌면 다시 확인합니다.");}
     const issues=[...this.project.issues,...this.result.issues];
     if(final&&(this.project.changes.some(c=>c.decision==="pending")||this.project.editorial?.changes.some(c=>c.status==='pending')||issues.some(i=>i.severity==="error"||(i.severity==="warning"&&!this.project.acknowledgements[i.id])))){this.panel="issues";this.renderInspector();throw new Error("최종 PDF를 저장하기 전에 남은 변경 기록과 검사 항목을 확인하세요. 검토용 PDF는 저장할 수 있습니다.");}
@@ -486,11 +516,11 @@ export class JournalView extends ItemView{
       const missingTitle=!d.title.trim(),missingAuthor=academicChecks(p)&&!d.authors.some(a=>a.corresponding&&a.name.trim()&&a.email?.trim());
       const figures=d.blocks.filter(n=>n.kind==='figure'&&!n.chart&&!p.assets.some(a=>a.id===n.assetId));
       if(missingTitle||missingAuthor||figures.length){
-        const card=host.createDiv({cls:'aaeu-journal-card'});card.createEl('strong',{text:'출력 전에 확인할 원고 정보'});
-        if(missingTitle){card.createEl('p',{text:'제목이 비어 있습니다. 별도 제목·저자 파일이나 투고 시스템에서 확인해 입력하세요.'});if(this.panel!=='article')action(card,'제목 입력',()=>{this.panel='article';this.renderInspector();});}
-        if(missingAuthor){card.createEl('p',{text:'교신저자 이름·이메일이 없습니다. 입력하면 정해진 서식으로 자동 배치됩니다.'});if(this.panel!=='publication')action(card,'교신저자 입력',()=>{this.panel='publication';this.renderInspector();});}
-        for(const f of figures)if(f.kind==='figure')action(card,`${f.caption?.number?'Figure '+f.caption.number:'그림'} 원본 연결`,()=>{this.selected=f.id;this.panel='objects';this.renderInspector();void this.run(()=>this.replaceFigure(f.id));});
-        card.createEl('p',{text:'검토용 PDF와 AF·IDML에는 누락 표시와 그림 교체 자리를 남깁니다.'});
+        const card=host.createDiv({cls:'aaeu-journal-card'});card.createEl('strong',{text:t('출력 전에 확인할 원고 정보')});
+        if(missingTitle){card.createEl('p',{text:t('제목이 비어 있습니다. 별도 제목·저자 파일이나 투고 시스템에서 확인해 입력하세요.')});if(this.panel!=='article')action(card,t('제목 입력'),()=>{this.panel='article';this.renderInspector();});}
+        if(missingAuthor){card.createEl('p',{text:t('교신저자 이름·이메일이 없습니다. 입력하면 정해진 서식으로 자동 배치됩니다.')});if(this.panel!=='publication')action(card,t('교신저자 입력'),()=>{this.panel='publication';this.renderInspector();});}
+        for(const f of figures)if(f.kind==='figure')action(card,`${f.caption?.number?'Figure '+f.caption.number:t('그림')} 원본 연결`,()=>{this.selected=f.id;this.panel='objects';this.renderInspector();void this.run(()=>this.replaceFigure(f.id));});
+        card.createEl('p',{text:t('검토용 PDF와 AF·IDML에는 누락 표시와 그림 교체 자리를 남깁니다.')});
       }
     }
     if(p.markdown&&!['issues','preset'].includes(this.panel)){this.sourceInspector(host);return;}
@@ -498,96 +528,96 @@ export class JournalView extends ItemView{
     else if(this.panel==='editorial')editorialPanel(host,p,(fn,refresh)=>this.edit(fn,refresh),id=>this.selectNode(id));
     else if(this.panel==='endMatter')endMatterPanel(host,p,(fn,refresh)=>this.edit(fn,refresh),id=>this.selectNode(id));
     else if(this.panel==="article"){
-      action(host,"AOP·권호·날짜·판권 빠른 확인",()=>{this.panel="publication";this.renderInspector();});
-      const fields:Record<string,string>={title:"제목",runningTitle:"머리말 축약 제목",runningAuthors:"머리말 저자 표기",doi:"DOI",volume:"권",issue:"호",year:"연도",received:"접수일",revised:"수정일",accepted:"승인일"};
+      action(host,t("AOP·권호·날짜·판권 빠른 확인"),()=>{this.panel="publication";this.renderInspector();});
+      const fields:Record<string,string>={title:t("제목"),runningTitle:t("머리말 축약 제목"),runningAuthors:t("머리말 저자 표기"),doi:"DOI",volume:t("권"),issue:t("호"),year:t("연도"),received:t("접수일"),revised:t("수정일"),accepted:t("승인일")};
       for(const [key,label]of Object.entries(fields))field(host,label,typeof d[key as keyof typeof d]==="string"?d[key as keyof typeof d] as string:"",v=>this.edit(p=>{(p.document as unknown as Record<string,unknown>)[key]=v;},false));
-      field(host,"첫 쪽 번호",String(d.firstPage),v=>this.edit(p=>{p.document.firstPage=Math.max(1,Math.floor(Number(v)||1));},false));
+      field(host,t("첫 쪽 번호"),String(d.firstPage),v=>this.edit(p=>{p.document.firstPage=Math.max(1,Math.floor(Number(v)||1));},false));
       field(host,"저자 · 한 줄에 이름 | 소속 번호 | 이메일",d.authors.map(a=>[a.name,a.affiliations.join(","),a.email??""].join(" | ")).join("\n"),v=>this.edit(p=>{p.document.authors=v.split("\n").filter(Boolean).map((line,index)=>{const [name,aff,email]=line.split("|").map(s=>s.trim());const old=p.document.authors.find(a=>a.name===name)??p.document.authors[index];return {...old,name,affiliations:aff?.split(",")??[],email,corresponding:!!email};});}),true);
       for(const [i,a]of d.authors.entries())if(a.corresponding)field(host,`${a.name} 교신저자 주소 · 줄바꿈 유지`,a.address??"",v=>this.edit(p=>{p.document.authors[i].address=v;},false),true);
       field(host,"소속 · 한 줄에 하나",d.affiliations.join("\n"),v=>this.edit(p=>{p.document.affiliations=v.split("\n");},false),true);
       field(host,"소속 위첨자 · 한 줄에 하나 (예: 1,2)",d.affiliations.map((_,i)=>d.affiliationMarkers?.[i]??String(i+1)).join("\n"),v=>this.edit(p=>{p.document.affiliationMarkers=v.split("\n");},false),true);
-      field(host,"초록",d.abstract.map(b=>inlineText(b.content)).join("\n"),v=>this.edit(p=>{p.document.abstract=v.split("\n").map(text=>({id:newId("abstract"),kind:"paragraph",role:"abstract",content:[{text}]}));},false),true);
+      field(host,t("초록"),d.abstract.map(b=>inlineText(b.content)).join("\n"),v=>this.edit(p=>{p.document.abstract=v.split("\n").map(text=>({id:newId("abstract"),kind:"paragraph",role:"abstract",content:[{text}]}));},false),true);
       field(host,"키워드 · 세미콜론 구분",d.keywords.join("; "),v=>this.edit(p=>{p.document.keywords=v.split(";").map(s=>s.trim()).filter(Boolean);},false));
       host.createEl("p",{text:`원본 ${p.sources.length}개 · 그림 ${p.assets.length}개 · 변경 기록 ${p.changes.length}개`});
       if(d.importedMetadata?.length){
         const details=host.createEl("details");details.createEl("summary",{text:"원고 정보 추출 근거 · 원문 보존"});
-        const labels={title:"제목",runningTitle:"머리말 제목",authors:"저자",affiliations:"소속",correspondence:"교신저자",submission:"투고 정보",keywords:'키워드',abstractLabel:'초록 표제'};
+        const labels={title:t("제목"),runningTitle:t("머리말 제목"),authors:t("저자"),affiliations:t("소속"),correspondence:t("교신저자"),submission:t("투고 정보"),keywords:t('키워드'),abstractLabel:t('초록 표제')};
         for(const item of d.importedMetadata){
-          const card=details.createDiv({cls:"aaeu-journal-card"});card.createEl("strong",{text:labels[item.field]+" · "+(p.sources.find(s=>s.id===item.sourceId)?.name??"직접 편집")});
+          const card=details.createDiv({cls:"aaeu-journal-card"});card.createEl("strong",{text:labels[item.field]+" · "+(p.sources.find(s=>s.id===item.sourceId)?.name??t("직접 편집"))});
           for(const block of item.blocks)card.createEl("p",{text:inlineText(block.content)});
         }
       }
     }else if(this.panel==="references"){
       if(!referenceChecks(p))host.createEl("p",{text:"참고문헌 검사가 꺼져 있습니다. 내용과 출력 서식은 유지되며, 온라인 조회는 아래 버튼으로 실행합니다."});
-      action(host,"참고문헌 추가",()=>this.run(async()=>{const r=await referenceDialog(this.app,emptyReference());if(r)this.edit(p=>p.references.push(r));}));
-      action(host,"DOI·서지정보 조회",()=>this.run(async()=>{
-        const q=await textDialog(this.app,"참고문헌 조회","Crossref에 보낼 DOI 또는 서지정보","");if(!q)return;
+      action(host,t("참고문헌 추가"),()=>this.run(async()=>{const r=await referenceDialog(this.app,emptyReference());if(r)this.edit(p=>p.references.push(r));}));
+      action(host,t("DOI·서지정보 조회"),()=>this.run(async()=>{
+        const q=await textDialog(this.app,t("참고문헌 조회"),t("Crossref에 보낼 DOI 또는 서지정보"),"");if(!q)return;
         const records=await lookupCrossref(q,async url=>(await requestUrl({url})).json as unknown);
-        const modal=new Modal(this.app);modal.titleEl.setText("서지정보 후보");
-        for(const r of records)action(modal.contentEl,`${r.title} (${r.year??"연도 없음"})`,()=>this.run(async()=>{const confirmed=await referenceDialog(this.app,r);if(confirmed){this.edit(p=>p.references.push(confirmed));modal.close();}}));
-        if(!records.length)modal.contentEl.createEl("p",{text:"일치하는 후보가 없습니다."});modal.open();
+        const modal=new Modal(this.app);modal.titleEl.setText(t("서지정보 후보"));
+        for(const r of records)action(modal.contentEl,`${r.title} (${r.year??t("연도 없음")})`,()=>this.run(async()=>{const confirmed=await referenceDialog(this.app,r);if(confirmed){this.edit(p=>p.references.push(confirmed));modal.close();}}));
+        if(!records.length)modal.contentEl.createEl("p",{text:t("일치하는 후보가 없습니다.")});modal.open();
       }));
-      for(const ref of p.references){const row=host.createDiv({cls:"aaeu-journal-card"});row.dataset.referenceId=ref.id;row.createEl("p",{text:(ref.confirmed?"✓ ":"미확정 · ")+(ref.title||ref.raw||"제목 없음")});action(row,"편집",()=>this.run(async()=>{const r=await referenceDialog(this.app,ref);if(r)this.edit(p=>{p.references=p.references.map(v=>v.id===r.id?r:v);});}));
+      for(const ref of p.references){const row=host.createDiv({cls:"aaeu-journal-card"});row.dataset.referenceId=ref.id;row.createEl("p",{text:(ref.confirmed?"✓ ":t("미확정 · "))+(ref.title||ref.raw||t("제목 없음"))});action(row,t("편집"),()=>this.run(async()=>{const r=await referenceDialog(this.app,ref);if(r)this.edit(p=>{p.references=p.references.map(v=>v.id===r.id?r:v);});}));
         field(row,'저자/단체명 정렬 키',ref.sort?.authorKey??inferredAuthorKey(ref)??'',v=>this.edit(p=>{const r=p.references.find(r=>r.id===ref.id)!;r.sort={...r.sort,authorKey:v,confirmed:!!v.trim()};},false));
         field(row,'동일 저자·연도의 제목 정렬 키',ref.sort?.titleKey??ref.title,v=>this.edit(p=>{const r=p.references.find(r=>r.id===ref.id)!;r.sort={authorKey:r.sort?.authorKey??inferredAuthorKey(r)??'',confirmed:r.sort?.confirmed??false,titleKey:v};},false));
       }
     }else if(this.panel==="changes"){
       host.createEl("p",{text:"원고 창의 색 표시에는 변경 전·후 텍스트가 모두 보입니다. PDF는 현재 결정에 따른 최종 보기를 사용합니다."});
-      for(const [decision,label]of [["accepted","모두 수락"],["rejected","모두 거절"]] as const)action(host,label,()=>this.edit(p=>setChangeDecision(p,p.changes.map(c=>c.id),decision)));
+      for(const [decision,label]of [["accepted",t("모두 수락")],["rejected",t("모두 거절")]] as const)action(host,label,()=>this.edit(p=>setChangeDecision(p,p.changes.map(c=>c.id),decision)));
       for(const c of p.changes){const row=host.createDiv({cls:"aaeu-journal-card"});row.createEl("p",{text:`${c.kind} · ${c.author} · ${c.date} · ${c.decision}`});
         const runs=p.document.blocks.flatMap(n=>n.kind==="paragraph"||n.kind==="heading"?n.content:n.kind==="table"?n.rows.flatMap(r=>r.cells.flatMap(c=>c.blocks.flatMap(b=>b.content))):[]).filter(r=>r.changeIds?.includes(c.id));row.createEl("p",{text:inlineText(runs).slice(0,300)||c.detail||""});
-        if(c.kind!=="unsupported")for(const [decision,label]of [["accepted","수락"],["rejected","거절"],["pending","보류"]] as const)action(row,label,()=>this.edit(p=>setChangeDecision(p,[c.id],decision)));
+        if(c.kind!=="unsupported")for(const [decision,label]of [["accepted",t("수락")],["rejected",t("거절")],["pending",t("보류")]] as const)action(row,label,()=>this.edit(p=>setChangeDecision(p,[c.id],decision)));
       }
     }else if(this.panel==="preset"){
-      host.createEl("h3",{text:p.preset.template?.name??"기존 프로젝트 설정"});
-      host.createEl("p",{text:"조판 규칙은 유지하고 로고·색상·문구·글꼴만 바꿉니다. 기존 원고의 세부 값은 보존됩니다."});
-      action(host,"템플릿 선택·만들기",()=>this.openTemplates());
-      host.createEl("p",{text:`저장된 글꼴: ${[...new Set(p.fonts.map(f=>f.family))].join(", ")||"조판 시 자동으로 가져옵니다."}`});
+      host.createEl("h3",{text:p.preset.template?.name??t("기존 프로젝트 설정")});
+      host.createEl("p",{text:t("조판 규칙은 유지하고 로고·색상·문구·글꼴만 바꿉니다. 기존 원고의 세부 값은 보존됩니다.")});
+      action(host,t("템플릿 선택·만들기"),()=>this.openTemplates());
+      host.createEl("p",{text:`저장된 글꼴: ${[...new Set(p.fonts.map(f=>f.family))].join(", ")||t("조판 시 자동으로 가져옵니다.")}`});
     }else if(this.panel==="objects")this.objects(host);
     else {
       const issues=[...p.issues,...(this.result?.issues??editorialIssues(p))];
-      action(host,'원고 정리와 재가져오기 검토',()=>{this.panel='editorial';this.renderInspector();});
-      if(this.result?.numbering?.length){const numbers=host.createEl('details');numbers.createEl('summary',{text:'원고 번호 → 출력 번호'});for(const n of this.result.numbering)action(numbers,`${n.kind} ${n.original||'없음'} → ${n.number} · ${n.page}쪽`,()=>this.selectNode(n.id));}
+      action(host,t('원고 정리와 재가져오기 검토'),()=>{this.panel='editorial';this.renderInspector();});
+      if(this.result?.numbering?.length){const numbers=host.createEl('details');numbers.createEl('summary',{text:t('원고 번호 → 출력 번호')});for(const n of this.result.numbering)action(numbers,`${n.kind} ${n.original||t('없음')} → ${n.number} · ${n.page}쪽`,()=>this.selectNode(n.id));}
       host.createEl("p",{text:`검사 ${issues.length}건 · 미결정 변경 ${p.changes.filter(c=>c.decision==="pending").length}건`});
-      if(this.result?.coverage)host.createEl('p',{text:`출력 내용 대조: ${this.result.coverage.complete?'모두 대응':'미해결 있음'} · ${this.result.coverage.entries.length}개 항목`});
+      if(this.result?.coverage)host.createEl('p',{text:`출력 내용 대조: ${this.result.coverage.complete?t('모두 대응'):t('미해결 있음')} · ${this.result.coverage.entries.length}개 항목`});
       const ledger=host.createEl('details');ledger.createEl('summary',{text:`자동 보정 기록 ${this.result?.adjustments?.length??0}건`});
-      for(const a of this.result?.adjustments??[]){const row=ledger.createDiv({cls:'aaeu-journal-card'});row.createEl('p',{text:`${a.rule}: ${a.before} → ${a.after} · ${a.reason}`});action(row,'항목 선택',()=>{this.selected=a.nodeId;this.panel='objects';this.renderInspector();});action(row,'이 항목 자동 보정 해제',()=>this.edit(p=>{const q=compositionQuality(p);p.preset.compositionQuality={...q,disabledNodes:[...new Set([...q.disabledNodes,a.nodeId])]};}));}
+      for(const a of this.result?.adjustments??[]){const row=ledger.createDiv({cls:'aaeu-journal-card'});row.createEl('p',{text:`${a.rule}: ${a.before} → ${a.after} · ${a.reason}`});action(row,t('항목 선택'),()=>{this.selected=a.nodeId;this.panel='objects';this.renderInspector();});action(row,'이 항목 자동 보정 해제',()=>this.edit(p=>{const q=compositionQuality(p);p.preset.compositionQuality={...q,disabledNodes:[...new Set([...q.disabledNodes,a.nodeId])]};}));}
       for(const i of issues){const row=host.createDiv({cls:"aaeu-journal-card"});row.createEl("p",{text:`${i.severity} · ${i.message}`});
-        if(i.nodeId)action(row,"항목 선택",()=>this.selectNode(i.nodeId!));
-        if(i.severity==="warning")action(row,p.acknowledgements[i.id]?"확인 사유 수정":"확인 기록",()=>this.run(async()=>{const reason=await textDialog(this.app,"검사 확인","원본 대조 결과 또는 수용 사유",p.acknowledgements[i.id]??"");if(reason?.trim())this.edit(p=>{p.acknowledgements[i.id]=reason.trim();});}));
+        if(i.nodeId)action(row,t("항목 선택"),()=>this.selectNode(i.nodeId!));
+        if(i.severity==="warning")action(row,p.acknowledgements[i.id]?t("확인 사유 수정"):t("확인 기록"),()=>this.run(async()=>{const reason=await textDialog(this.app,t("검사 확인"),t("원본 대조 결과 또는 수용 사유"),p.acknowledgements[i.id]??"");if(reason?.trim())this.edit(p=>{p.acknowledgements[i.id]=reason.trim();});}));
       }
     }
   }
   private publicationPanel(host:HTMLElement):void{
     const d=this.project.document,pages=this.result?.pageCount,m=resolvedMaster(this.project.preset);
     host.createEl("p",{text:"첫 페이지의 영역을 클릭해 값을 수정하세요. 글꼴·색·위치는 저널 프리셋이 적용합니다."});
-    host.createEl("p",{text:!academicChecks(this.project)?"일반 간행물 · 발행정보 확인은 선택입니다.":pages&&publicationReviewed(this.project,pages)?"✓ 현재 발행정보 확인 완료":"발행정보 확인 필요 · 수정 후 미리보기에서 확인하세요.",cls:"aaeu-journal-publication-status"});
+    host.createEl("p",{text:!academicChecks(this.project)?t("일반 간행물 · 발행정보 확인은 선택입니다."):pages&&publicationReviewed(this.project,pages)?t("✓ 현재 발행정보 확인 완료"):t("발행정보 확인 필요 · 수정 후 미리보기에서 확인하세요."),cls:"aaeu-journal-publication-status"});
     const section=(id:string,title:string):HTMLElement=>{const el=host.createDiv({cls:"aaeu-journal-card"});el.dataset.publicationZone=id;el.createEl("h3",{text:title});return el;};
-    const issue=section("issue","발행 단계와 쪽수");
-    choose(issue,"발행 단계",publicationMode(d),{aop:"AOP · 권·호·쪽수 숨김",issue:"권호 확정본"},v=>this.edit(p=>{p.document.publication={...p.document.publication,mode:v as "aop"|"issue"};}));
-    for(const [key,label]of [["year","발행 연도"],["volume","권"],["issue","호"],["doi","DOI · doi.org 주소도 입력 가능"]] as const)field(issue,label,d[key],v=>this.edit(p=>{p.document[key]=key==="doi"?canonicalDoi(v):v.trim();},false));
-    field(issue,"시작 쪽수",String(d.firstPage),v=>{const n=Number(v);if(Number.isInteger(n)&&n>0&&n<=100000)this.edit(p=>{p.document.firstPage=n;},false);});
+    const issue=section("issue",t("발행 단계와 쪽수"));
+    choose(issue,t("발행 단계"),publicationMode(d),{aop:t("AOP · 권·호·쪽수 숨김"),issue:t("권호 확정본")},v=>this.edit(p=>{p.document.publication={...p.document.publication,mode:v as "aop"|"issue"};}));
+    for(const [key,label]of [["year",t("발행 연도")],["volume",t("권")],["issue",t("호")],["doi","DOI · doi.org 주소도 입력 가능"]] as const)field(issue,label,d[key],v=>this.edit(p=>{p.document[key]=key==="doi"?canonicalDoi(v):v.trim();},false));
+    field(issue,t("시작 쪽수"),String(d.firstPage),v=>{const n=Number(v);if(Number.isInteger(n)&&n>0&&n<=100000)this.edit(p=>{p.document.firstPage=n;},false);});
     issue.createEl("p",{text:pages?`최근 출력 ${pages}쪽 · 확정본 ${d.firstPage}–${d.firstPage+pages-1}쪽 · 다음 논문 시작 ${d.firstPage+pages}쪽`:"조판 후 끝 쪽수와 다음 논문의 시작 쪽수를 자동 계산합니다."});
     if(publicationMode(d)==="aop")issue.createEl("p",{text:"입력한 권·호·시작 쪽수는 보관되며 AOP PDF에는 표시되지 않습니다."});
-    const side=section("correspondence","심사 날짜와 교신저자");
+    const side=section("correspondence",t("심사 날짜와 교신저자"));
     for(const [key,label]of [["received","Received · 접수일"],["revised","Revised · 수정일"],["accepted","Accepted · 승인일"]] as const)field(side,label,d[key],v=>this.edit(p=>{p.document[key]=v;},false));
     for(const [i,a]of d.authors.entries()){
       const card=side.createDiv({cls:"aaeu-journal-card"});
-      choose(card,`${a.name||"저자 "+(i+1)} 교신저자`,a.corresponding?"yes":"no",{yes:"교신저자",no:"일반 저자"},v=>this.edit(p=>{p.document.authors[i].corresponding=v==="yes";}));
-      if(a.corresponding)for(const [key,label]of [["name","이름"],["email","이메일"],["address","주소"]] as const)field(card,`교신저자 ${i+1} ${label}`,a[key]??"",v=>this.edit(p=>{p.document.authors[i][key]=v;},false),key==="address");
+      choose(card,`${a.name||"저자 "+(i+1)} 교신저자`,a.corresponding?"yes":"no",{yes:t("교신저자"),no:"일반 저자"},v=>this.edit(p=>{p.document.authors[i].corresponding=v==="yes";}));
+      if(a.corresponding)for(const [key,label]of [["name",t("이름")],["email",t("이메일")],["address",t("주소")]] as const)field(card,`교신저자 ${i+1} ${label}`,a[key]??"",v=>this.edit(p=>{p.document.authors[i][key]=v;},false),key==="address");
     }
-    action(side,"교신저자 추가",()=>this.edit(p=>p.document.authors.push({name:"",affiliations:[],corresponding:true,email:"",address:""})));
-    const brand=section("brand","로고와 Crossmark");
-    action(brand,"템플릿에서 로고·마크 변경",()=>this.openTemplates());
-    const copyright=section("copyright","판권과 라이선스");
+    action(side,t("교신저자 추가"),()=>this.edit(p=>p.document.authors.push({name:"",affiliations:[],corresponding:true,email:"",address:""})));
+    const brand=section("brand",t("로고와 Crossmark"));
+    action(brand,t("템플릿에서 로고·마크 변경"),()=>this.openTemplates());
+    const copyright=section("copyright",t("판권과 라이선스"));
     field(copyright,"판권 연도 · 비우면 발행 연도 사용",d.publication?.copyrightYear??"",v=>this.edit(p=>{p.document.publication={...p.document.publication,mode:publicationMode(p.document),copyrightYear:v.trim()};},false));
-    copyright.createEl("p",{text:this.project.preset.appearance?.copyrightText!==undefined?"표시: "+(resolveTemplateText(this.project.preset.appearance.copyrightText,this.project)||"숨김"):`표시: Copyright © ${copyrightYear(d)||"연도 미입력"} ${m.copyrightOwner}`});
-    action(host,"로고·색상·문구 템플릿",()=>this.openTemplates());
-    const missing=academicChecks(this.project)?publicationMissing(d):[];if(missing.length)host.createEl("p",{text:"미입력: "+missing.join(", ")});
-    action(host,"미리보기 갱신",()=>this.run(()=>this.compose()));
-    action(host,"현재 발행정보 확인·확정",()=>this.run(async()=>{
+    copyright.createEl("p",{text:this.project.preset.appearance?.copyrightText!==undefined?"표시: "+(resolveTemplateText(this.project.preset.appearance.copyrightText,this.project)||t("숨김")):`표시: Copyright © ${copyrightYear(d)||t("연도 미입력")} ${m.copyrightOwner}`});
+    action(host,t("로고·색상·문구 템플릿"),()=>this.openTemplates());
+    const missing=academicChecks(this.project)?publicationMissing(d):[];if(missing.length)host.createEl("p",{text:t("미입력: ")+missing.join(", ")});
+    action(host,t("미리보기 갱신"),()=>this.run(()=>this.compose()));
+    action(host,t("현재 발행정보 확인·확정"),()=>this.run(async()=>{
       if(!this.result||this.result.fingerprint!==await digestBytes(jsonBytes(this.project))){await this.compose();this.status.setText("미리보기를 갱신했습니다. 표시된 발행정보를 확인한 뒤 다시 확정하세요.");return;}
-      if(!this.result||this.result.fingerprint!==await digestBytes(jsonBytes(this.project)))throw new Error("최신 미리보기를 생성한 뒤 확인하세요.");
+      if(!this.result||this.result.fingerprint!==await digestBytes(jsonBytes(this.project)))throw new Error(t("최신 미리보기를 생성한 뒤 확인하세요."));
       const snapshot=publicationSnapshot(this.project,this.result.pageCount);
       this.edit(p=>{p.document.publication={...p.document.publication,mode:publicationMode(p.document),review:{snapshot,at:new Date().toISOString()}};},false);
       this.renderInspector();await this.save();
@@ -597,35 +627,35 @@ export class JournalView extends ItemView{
     action(host,"텍스트 데이터로 표 만들기",()=>this.run(()=>this.addData(false)));
     action(host,"데이터로 차트 만들기",()=>this.run(()=>this.addData(true)));
     const choices:Record<string,string>={};for(const n of this.project.document.blocks)choices[n.id]=n.kind+" · "+(n.kind==="paragraph"||n.kind==="heading"?inlineText(n.content).slice(0,45):(n.kind==="table"||n.kind==="figure")?inlineText(n.caption?.title??[]).slice(0,45):n.id);
-    for(const b of this.result?.boxes.filter(b=>b.kind==="text-frame")??[])choices[b.nodeId]=`${b.page}쪽 텍스트 프레임 ${b.nodeId.endsWith(":0")?"왼쪽":"오른쪽"}`;
-    choose(host,"항목",this.selected,choices,v=>{this.selected=v;this.renderInspector();});
+    for(const b of this.result?.boxes.filter(b=>b.kind==="text-frame")??[])choices[b.nodeId]=`${b.page}쪽 텍스트 프레임 ${b.nodeId.endsWith(":0")?t("왼쪽"):t("오른쪽")}`;
+    choose(host,t("항목"),this.selected,choices,v=>{this.selected=v;this.renderInspector();});
     const node=this.project.document.blocks.find(n=>n.id===this.selected);
     if(node){
       if(node.kind==='anchor'){
         host.createEl('p',{text:`원문 삽입 지점: ${inlineText(node.source.content)}`});
         const targets=Object.fromEntries(this.project.document.blocks.filter(n=>n.kind===node.targetKind).map(n=>[n.id,`${n.kind} ${(n.kind==='figure'||n.kind==='table')?n.caption?.number??'':''} · ${(n.kind==='figure'||n.kind==='table')?inlineText(n.caption?.title??[]):''}`]));
-        choose(host,'배치할 개체',node.targetIds.length===1?node.targetIds[0]:'',{'':'대상 선택',...targets},v=>this.edit(p=>{const a=p.document.blocks.find(n=>n.id===node.id);if(a?.kind==='anchor')a.targetIds=v?[v]:[];}));
+        choose(host,t('배치할 개체'),node.targetIds.length===1?node.targetIds[0]:'',{'':t('대상 선택'),...targets},v=>this.edit(p=>{const a=p.document.blocks.find(n=>n.id===node.id);if(a?.kind==='anchor')a.targetIds=v?[v]:[];}));
       }
-      const q=compositionQuality(this.project);choose(host,'이 항목 자동 보정',q.disabledNodes.includes(node.id)?'no':'yes',{yes:'프리셋 기준 사용',no:'사용 안 함'},v=>this.edit(p=>{const q=compositionQuality(p);p.preset.compositionQuality={...q,disabledNodes:v==='yes'?q.disabledNodes.filter(id=>id!==node.id):[...new Set([...q.disabledNodes,node.id])]};}));
-      action(host,"앞으로 이동",()=>this.moveNode(-1));action(host,"뒤로 이동",()=>this.moveNode(1));
-      action(host,"본문에서 제거",()=>this.edit(p=>{p.document.blocks=p.document.blocks.filter(n=>n.id!==this.selected);}));
+      const q=compositionQuality(this.project);choose(host,'이 항목 자동 보정',q.disabledNodes.includes(node.id)?'no':'yes',{yes:t('프리셋 기준 사용'),no:t('사용 안 함')},v=>this.edit(p=>{const q=compositionQuality(p);p.preset.compositionQuality={...q,disabledNodes:v==='yes'?q.disabledNodes.filter(id=>id!==node.id):[...new Set([...q.disabledNodes,node.id])]};}));
+      action(host,t("앞으로 이동"),()=>this.moveNode(-1));action(host,t("뒤로 이동"),()=>this.moveNode(1));
+      action(host,t("본문에서 제거"),()=>this.edit(p=>{p.document.blocks=p.document.blocks.filter(n=>n.id!==this.selected);}));
       if(node.kind==="paragraph"||node.kind==="heading"){
         for(const mention of objectMentions(this.project).filter(m=>m.nodeId===node.id)){
           const choices=Object.fromEntries(this.project.document.blocks.filter(n=>n.kind===mention.kind).map(n=>[n.id,`${(n.kind==='table'||n.kind==='figure')?n.caption?.number??'':''} · ${(n.kind==='table'||n.kind==='figure')?inlineText(n.caption?.title??[]):n.id}`]));
           const selected=mention.candidates.map(ids=>ids.length===1?ids[0]:'');
-          for(const [i,number]of mention.numbers.entries())choose(host,`${mention.text}: ${number} 대상`,selected[i],{'':'대상 선택',...choices},v=>{selected[i]=v;});
+          for(const [i,number]of mention.numbers.entries())choose(host,`${mention.text}: ${number} 대상`,selected[i],{'':t('대상 선택'),...choices},v=>{selected[i]=v;});
           action(host,'이 본문 참조 연결',()=>{if(selected.every(Boolean))this.edit(p=>bindMention(p,mention,selected));});
         }
-        choose(host,"용도",node.role??"body",{body:"본문",reference:"원문 참고문헌",quote:"인용",note:"주"},v=>this.edit(p=>{const n=p.document.blocks.find(n=>n.id===node.id) as Paragraph;n.role=v as Paragraph["role"];}));
+        choose(host,"용도",node.role??"body",{body:t("본문"),reference:"원문 참고문헌",quote:"인용",note:"주"},v=>this.edit(p=>{const n=p.document.blocks.find(n=>n.id===node.id) as Paragraph;n.role=v as Paragraph["role"];}));
         action(host,"제목으로 지정하고 본문에서 제거",()=>this.edit(p=>{p.document.title=inlineText(node.content);p.document.importedMetadata??=[];p.document.importedMetadata.push({field:"title",sourceId:node.origin?.sourceId??"",blocks:[cloneJournal(node)],rule:"editor-selection"});p.document.blocks=p.document.blocks.filter(n=>n.id!==node.id);}));
       }
       if(node.kind==="figure"||node.kind==="table"){
         if(node.kind==='figure'){
           if(node.sourceObject)host.createEl('p',{text:node.sourceObject.description+' · '+node.sourceObject.part});
-          action(host,node.assetId?'원본 그림 교체':'원본 그림 연결',()=>this.run(()=>this.replaceFigure(node.id)));
+          action(host,node.assetId?t('원본 그림 교체'):t('원본 그림 연결'),()=>this.run(()=>this.replaceFigure(node.id)));
           if(node.assetId){
-            action(host,'내장 캡션·크롭 확인',()=>this.run(()=>this.cropFigure(node.id)));
-            action(host,'이미지 캡션 다시 검사',()=>this.run(()=>this.scanCaptions(node.assetId)));
+            action(host,t('내장 캡션·크롭 확인'),()=>this.run(()=>this.cropFigure(node.id)));
+            action(host,t('이미지 캡션 다시 검사'),()=>this.run(()=>this.scanCaptions(node.assetId)));
             const detection=this.project.editorial?.detections.find(d=>d.assetId===node.assetId);if(detection)host.createEl('p',{text:detection.status==='failed'?`OCR 확인 필요: ${detection.message}`:`내장 캡션 후보 ${detection.candidates.length}개${node.crop?.confirmed?' · 크롭 적용됨':''}`});
           }
         }
@@ -642,17 +672,17 @@ export class JournalView extends ItemView{
           action(host,'표 안 제목 사용',()=>this.edit(p=>resolveEmbeddedTableCaption(p,node.id,'inside')));
           action(host,'표 밖 제목 사용',()=>this.edit(p=>resolveEmbeddedTableCaption(p,node.id,'outside')));
         }
-        choose(host,"폭",node.width,{auto:"자동",column:"한 단",full:"본문 전체"},v=>this.edit(p=>{const n=p.document.blocks.find(n=>n.id===node.id) as typeof node;n.width=v as typeof node.width;}));
+        choose(host,t("폭"),node.width,{auto:t("자동"),column:t("한 단"),full:t("본문 전체")},v=>this.edit(p=>{const n=p.document.blocks.find(n=>n.id===node.id) as typeof node;n.width=v as typeof node.width;}));
         const setCaption=(key:"number"|"title",value:string):void=>this.edit(p=>{const n=p.document.blocks.find(n=>n.id===node.id) as typeof node;n.caption??={number:"",title:[],notes:[]};if(key==="title")n.caption.title=[{text:value}];else n.caption.number=value;},false);
-        field(host,"번호",node.caption?.number??"",v=>setCaption("number",v));field(host,"캡션",inlineText(node.caption?.title??[]),v=>setCaption("title",v),true);
+        field(host,t("번호"),node.caption?.number??"",v=>setCaption("number",v));field(host,t("캡션"),inlineText(node.caption?.title??[]),v=>setCaption("title",v),true);
         field(host,"주",node.caption?.notes.map(b=>inlineText(b.content)).join("\n")??"",v=>this.edit(p=>{const n=p.document.blocks.find(n=>n.id===node.id) as typeof node;n.caption??={number:"",title:[],notes:[]};n.caption.notes=v.split("\n").filter(Boolean).map(text=>({id:newId("note"),kind:"paragraph",role:"note",content:[{text}]}));},false),true);
       }
     }
     const box=this.result?.boxes.find(b=>b.nodeId===this.selected),pin=this.project.overrides.find(o=>o.id===this.selected);
     if(box&&["figure","table","text-frame"].includes(box.kind)){
       const values={id:box.nodeId,page:pin?.page??box.page,x:pin?.x??box.x,y:pin?.y??box.y,width:pin?.width??box.width,height:pin?.height??box.height,locked:true};
-      for(const [key,label]of Object.entries({page:"쪽",x:"왼쪽 위치(pt)",y:"위쪽 위치(pt)",width:"폭(pt)",height:"높이(pt)"}))field(host,label,String(values[key as keyof typeof values]),v=>{const n=Number(v);if(Number.isFinite(n))(values as unknown as Record<string,unknown>)[key]=n;});
-      action(host,"위치 고정",()=>this.applyOverride(values));action(host,"자동 배치로 복원",()=>this.edit(p=>{p.overrides=p.overrides.filter(o=>o.id!==this.selected);}));
+      for(const [key,label]of Object.entries({page:t("쪽"),x:t("왼쪽 위치(pt)"),y:t("위쪽 위치(pt)"),width:t("폭(pt)"),height:t("높이(pt)")}))field(host,label,String(values[key as keyof typeof values]),v=>{const n=Number(v);if(Number.isFinite(n))(values as unknown as Record<string,unknown>)[key]=n;});
+      action(host,t("위치 고정"),()=>this.applyOverride(values));action(host,t("자동 배치로 복원"),()=>this.edit(p=>{p.overrides=p.overrides.filter(o=>o.id!==this.selected);}));
     }
   }
   private moveNode(delta:number):void{this.edit(p=>{const index=p.document.blocks.findIndex(n=>n.id===this.selected),target=index+delta;if(index>=0&&target>=0&&target<p.document.blocks.length){const [n]=p.document.blocks.splice(index,1);p.document.blocks.splice(target,0,n);}});}

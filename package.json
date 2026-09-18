@@ -1,10 +1,10 @@
 {
   "name": "achmage-academic-editor-ultra",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Deterministic journal composition from Markdown or author DOCX, with PDF, IDML and native Affinity export.",
   "main": "main.js",
   "scripts": {
-    "gen-assets": "node scripts/gen-journal-assets.mjs && node scripts/gen-journal-ocr.mjs",
+    "gen-assets": "node scripts/generate-sample.mjs && node scripts/gen-journal-assets.mjs && node scripts/gen-journal-ocr.mjs",
     "dev": "npm run gen-assets && node esbuild.config.mjs",
     "build": "npm run gen-assets && tsc --noEmit --skipLibCheck && node esbuild.config.mjs production",
     "test": "node scripts/run-tests.mjs",
