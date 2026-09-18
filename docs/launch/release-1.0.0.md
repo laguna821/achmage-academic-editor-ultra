@@ -32,7 +32,9 @@ Affinity has its own text engine: inspect final line breaks and the last linked 
 
 ## Package size
 
-`main.js`: **18,235,591 bytes** (18.24 MB / 17.39 MiB). Installation ZIP: **12,107,205 bytes** (12.11 MB). Compared with the 0.2.0 candidate, the main bundle is 55,032 bytes smaller. CodeMirror core is provided by Obsidian; compiler and OCR resources remain offline.
+`main.js`: **18,235,119 bytes** (18.24 MB / 17.39 MiB). Installation ZIP: **12,107,177 bytes** (12.11 MB). Compared with the 0.2.0 candidate, the main bundle is 55,504 bytes smaller. CodeMirror core is provided by Obsidian; compiler and OCR resources remain offline.
+
+The offline bundle exceeds Obsidian Sync Standard's 5 MB file limit. Install the plugin on each desktop directly if that plan cannot synchronize it.
 
 ## Install and use
 

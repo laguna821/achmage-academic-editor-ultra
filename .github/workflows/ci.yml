@@ -23,6 +23,8 @@ jobs:
           cache: npm
       - run: npm ci --ignore-scripts
       - run: npm audit --omit=dev
+      # Community scans the source before generating embedded assets.
+      - run: npm run lint
       - run: npm run check
       - run: npm run docs:yaml
       - run: git diff --exit-code -- templates docs/markdown-properties.md

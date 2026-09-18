@@ -25,7 +25,7 @@
 .aaeu-journal-prose .ProseMirror-selectednode { outline:2px solid var(--interactive-accent); }
 .aaeu-journal-prose .ProseMirror-gapcursor { display:none; }
 .aaeu-journal-object { padding:12px; background:var(--background-secondary); border-left:3px solid var(--interactive-accent); margin:12px 0; }
-.aaeu-journal-revision { background:rgba(212,164,31,.17); text-decoration:underline dotted; }
+.aaeu-journal-revision { background:rgba(212,164,31,.17); text-decoration-line:underline; text-decoration-style:dotted; }
 .aaeu-journal-citation { background:rgba(0,120,95,.1); }
 .aaeu-journal-inline-asset { border:1px dotted var(--text-muted); padding:1px 3px; }
 .aaeu-journal-preview { overflow:auto; padding:16px; background:var(--background-secondary); min-width:0; }
